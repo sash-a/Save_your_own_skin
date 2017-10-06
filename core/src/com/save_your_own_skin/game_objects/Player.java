@@ -12,6 +12,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game.World;
 import com.save_your_own_skin.interfaces.Upgradable;
 
+import java.util.List;
+
 /**
  * Save_your_own_skin
  * Sasha
@@ -19,22 +21,6 @@ import com.save_your_own_skin.interfaces.Upgradable;
  */
 public class Player extends CharacterObject implements Upgradable
 {
-
-    /**
-     * Creates an uninitialized sprite. The sprite will need a texture region and bounds set before it can be drawn.
-     *
-     * @param damage
-     * @param damageRadius
-     * @param level
-     * @param health
-     * @param maxHealth
-     * @param speed
-     */
-    public Player(float damage, float damageRadius, int level, int health, int maxHealth, float speed)
-    {
-        super(damage, damageRadius, level, health, maxHealth, speed);
-    }
-
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
      * will be 0,0.
@@ -95,6 +81,20 @@ public class Player extends CharacterObject implements Upgradable
     }
 
     /**
+     * This is how complexity is reduced from O(n^2)
+     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
+     * only search through these few entities
+     *
+     * @param entity Entity for which to find the neighbours of
+     * @return List<Entity>
+     */
+    @Override
+    public List<GameObject> findNeighbours(GameObject entity)
+    {
+        return null;
+    }
+
+    /**
      * W moves player forward in the current direction
      * S does the opposite of W
      *
@@ -102,7 +102,7 @@ public class Player extends CharacterObject implements Upgradable
      */
     private void handleInput(float delta)
     {
-
+        // TODO: Can move at double speed if 2 buttons pressed at the same time
         if (Gdx.input.isKeyPressed(Keys.W))
         {
             float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
@@ -113,7 +113,7 @@ public class Player extends CharacterObject implements Upgradable
             if (angleX == 0)
                 angleX += Math.PI;
 
-            super.translate(-angleX * super.getSpeed() * delta,angleY * super.getSpeed() * delta);
+            super.translate(-angleX * super.getSpeed() * delta, angleY * super.getSpeed() * delta);
         }
         if (Gdx.input.isKeyPressed(Keys.S))
         {
@@ -125,7 +125,7 @@ public class Player extends CharacterObject implements Upgradable
             if (angleX == 0)
                 angleX += Math.PI;
 
-            super.translate(angleX * super.getSpeed() * delta,-angleY * super.getSpeed() * delta);
+            super.translate(angleX * super.getSpeed() * delta, -angleY * super.getSpeed() * delta);
         }
         // TODO: Fix strafing!
         if (Gdx.input.isKeyPressed(Keys.A))
@@ -138,7 +138,7 @@ public class Player extends CharacterObject implements Upgradable
             super.translateX(super.getSpeed() * delta);
         }
 
-        // Rotation
+        // Point towards mouse
         float mouseX = Gdx.input.getX();
         float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 

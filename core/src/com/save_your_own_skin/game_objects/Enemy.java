@@ -1,8 +1,13 @@
 package com.save_your_own_skin.game_objects;
 
 import base_classes.CharacterObject;
+import base_classes.GameObject;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
+
+import java.util.List;
 
 /**
  * Save_your_own_skin
@@ -11,21 +16,6 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
  */
 public class Enemy extends CharacterObject
 {
-    /**
-     * Creates an uninitialized sprite. The sprite will need a texture region and bounds set before it can be drawn.
-     *
-     * @param damage
-     * @param damageRadius
-     * @param level
-     * @param health
-     * @param maxHealth
-     * @param speed
-     */
-    public Enemy(float damage, float damageRadius, int level, int health, int maxHealth, float speed)
-    {
-        super(damage, damageRadius, level, health, maxHealth, speed);
-    }
-
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
      * will be 0,0.
@@ -66,4 +56,40 @@ public class Enemy extends CharacterObject
     {
 
     }
+
+    /**
+     * This is how complexity is reduced from O(n^2)
+     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
+     * only search through these few entities
+     *
+     * @param entity Entity for which to find the neighbours of
+     * @return List<Entity>
+     */
+    @Override
+    public List<GameObject> findNeighbours(GameObject entity)
+    {
+        return null;
+    }
+
+    // TODO: find a way to call this in update
+    public void moveToPlayer(Player player, float delta)
+    {
+        // Point towards player
+        // Rotation
+        Vector2 dir = new Vector2(player.getX() - super.getX(), player.getY() - super.getY());
+        dir.rotate90(-1);
+        super.setRotation(dir.angle());
+
+        // Move
+        float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
+        if (angleY == 0)
+            angleY += Math.PI;
+
+        float angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
+        if (angleX == 0)
+            angleX += Math.PI;
+
+        super.translate(-angleX * super.getSpeed() * delta, angleY * super.getSpeed() * delta);
+    }
+
 }

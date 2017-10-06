@@ -14,20 +14,6 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
     private int cost, upgradeCost;
 
     /**
-     * Creates an uninitialized sprite. The sprite will need a texture region and bounds set before it can be drawn.
-     *
-     * @param damage
-     * @param damageRadius
-     * @param level
-     */
-    public PlaceableObject(float damage, float damageRadius, int level, int cost, int upgradeCost)
-    {
-        super(damage, damageRadius, level);
-        this.cost = cost;
-        this.upgradeCost = upgradeCost;
-    }
-
-    /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
      * will be 0,0.
      *

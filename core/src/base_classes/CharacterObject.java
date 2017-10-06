@@ -15,22 +15,6 @@ public abstract class CharacterObject extends GameObject
     private int health, maxHealth;
     private float speed;
 
-
-    /**
-     * Creates an uninitialized sprite. The sprite will need a texture region and bounds set before it can be drawn.
-     *
-     * @param damage
-     * @param damageRadius
-     * @param level
-     */
-    public CharacterObject(float damage, float damageRadius, int level, int health, int maxHealth, float speed)
-    {
-        super(damage, damageRadius, level);
-        this.health = health;
-        this.maxHealth = maxHealth;
-        this.speed = speed;
-    }
-
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
      * will be 0,0.
