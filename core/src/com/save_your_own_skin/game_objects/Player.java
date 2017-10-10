@@ -2,6 +2,8 @@ package com.save_your_own_skin.game_objects;
 
 import base_classes.CharacterObject;
 import base_classes.GameObject;
+import base_classes.PlaceableObject;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Keys;
@@ -35,9 +37,9 @@ public class Player extends CharacterObject implements Upgradable
      * @param maxHealth
      * @param speed
      */
-    public Player(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed)
+    public Player(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, health, maxHealth, speed);
+        super(texture, srcWidth, srcHeight, damage, damageRadius, level, health, maxHealth, speed, id);
     }
 
     /**
@@ -51,9 +53,9 @@ public class Player extends CharacterObject implements Upgradable
      * @param maxHealth
      * @param speed
      */
-    public Player(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed)
+    public Player(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
     {
-        super(sprite, damage, damageRadius, level, health, maxHealth, speed);
+        super(sprite, damage, damageRadius, level, health, maxHealth, speed, id);
     }
 
     @Override
@@ -75,9 +77,17 @@ public class Player extends CharacterObject implements Upgradable
     }
 
     @Override
+    public void onCollision(GameObject collidedObject, float delta)
+    {
+        System.out.println("Collided");
+        if (collidedObject instanceof CharacterObject)
+            update(delta);
+    }
+
+    @Override
     public void update(float delta)
     {
-        handleInput(delta);
+
     }
 
     /**
@@ -100,50 +110,82 @@ public class Player extends CharacterObject implements Upgradable
      *
      * @param delta
      */
-    private void handleInput(float delta)
+    public void handleInput(float delta)
     {
-        // TODO: Can move at double speed if 2 buttons pressed at the same time
+        float angleX = 0;
+        float angleY = 0;
+        // TODO: Find a better solution than adding pi to rotation
         if (Gdx.input.isKeyPressed(Keys.W))
         {
-            float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
-            if (angleY == 0)
-                angleY += Math.PI;
+            angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
+//            if (angleY == 0)
+//                angleY += Math.PI;
 
-            float angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
-            if (angleX == 0)
-                angleX += Math.PI;
-
-            super.translate(-angleX * super.getSpeed() * delta, angleY * super.getSpeed() * delta);
+            angleX = -(float) (Math.sin(Math.toRadians(super.getRotation())));
+//            if (angleX == 0)
+//                angleX += Math.PI;
         }
         if (Gdx.input.isKeyPressed(Keys.S))
         {
-            float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
-            if (angleY == 0)
-                angleY += Math.PI;
+            angleY = -(float) (Math.cos(Math.toRadians(super.getRotation())));
+//            if (angleY == 0)
+//                angleY += Math.PI;
 
-            float angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
-            if (angleX == 0)
-                angleX += Math.PI;
-
-            super.translate(angleX * super.getSpeed() * delta, -angleY * super.getSpeed() * delta);
+            angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
+//            if (angleX == 0)
+//                angleX += Math.PI;
         }
-        // TODO: Fix strafing!
+        // TODO: don't allow rotation if it leads to a collision
         if (Gdx.input.isKeyPressed(Keys.A))
         {
-            super.translateX(-super.getSpeed() * delta);
-
+            super.rotate(5);
         }
         if (Gdx.input.isKeyPressed(Keys.D))
         {
-            super.translateX(super.getSpeed() * delta);
+            super.rotate(-5);
         }
 
+        // TODO: fix is collision with new x and y and put it here
         // Point towards mouse
-        float mouseX = Gdx.input.getX();
-        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+//        float mouseX = Gdx.input.getX();
+//        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+//
+//        Vector2 dir = new Vector2(mouseX - super.getX(), mouseY - super.getY());
+//        dir.rotate90(-1);
+//        super.setRotation(dir.angle());
 
-        Vector2 dir = new Vector2(mouseX - super.getX(), mouseY - super.getY());
-        dir.rotate90(-1);
-        super.setRotation(dir.angle());
+        dx = angleX * super.getSpeed() * delta;
+        dy = angleY * super.getSpeed() * delta;
     }
+
+    public boolean place(PlaceableObject obj)
+    {
+        // Find direction to place block in
+        float roundedDirection = 90 * (float) Math.round(super.getRotation() / 90);
+        // Normalize direction (to less than  360)
+        while (roundedDirection > 360)
+            roundedDirection -= 360;
+
+        while (roundedDirection < 0)
+            roundedDirection += 360;
+
+        float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
+        float angleX = -(float) (Math.sin(Math.toRadians(super.getRotation())));
+
+        if (roundedDirection == 0 || roundedDirection == 360)
+            angleY += World.TILE_SIZE;
+        else if (roundedDirection == 90)
+            angleX -= World.TILE_SIZE;
+        else if (roundedDirection == 180)
+            angleY -= World.TILE_SIZE;
+        else
+            angleX += World.TILE_SIZE;
+
+
+        obj.setPosition(super.getX() + angleX,
+                super.getY() + angleY);
+
+        return true;
+    }
+
 }

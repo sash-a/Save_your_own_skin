@@ -1,6 +1,5 @@
 package base_classes;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -9,9 +8,10 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.save_your_own_skin.game_objects.Border;
 import utils.Level;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -21,9 +21,12 @@ import java.util.List;
  */
 public abstract class GameObject extends Sprite
 {
+    //TODO: move id to front of constructor
     private float damage, damageRadius;
     private int level;
     private Pixmap pmap;
+    private int id;
+    private boolean isDead;
 
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
@@ -33,12 +36,14 @@ public abstract class GameObject extends Sprite
      * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      */
-    public GameObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level)
+    public GameObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int id)
     {
         super(texture, srcWidth, srcHeight);
         this.damage = damage;
         this.damageRadius = damageRadius;
         this.level = level;
+        this.id = id;
+        this.isDead = false;
 
         updatePixmap(texture);
     }
@@ -48,12 +53,13 @@ public abstract class GameObject extends Sprite
      *
      * @param sprite
      */
-    public GameObject(Sprite sprite, float damage, float damageRadius, int level)
+    public GameObject(Sprite sprite, float damage, float damageRadius, int level, int id)
     {
         super(sprite);
         this.damage = damage;
         this.damageRadius = damageRadius;
         this.level = level;
+        this.id = id;
 
         updatePixmap(sprite.getTexture());
     }
@@ -94,6 +100,14 @@ public abstract class GameObject extends Sprite
         onLevelChange();
     }
 
+    public int getID() {return id;}
+
+    @Override
+    public boolean equals(Object other)
+    {
+        return other.getClass() == this.getClass() && ((GameObject) other).id == this.id;
+    }
+
     public void onLevelChange()
     {
         new Level(this.level, this).onLevelChange();
@@ -113,19 +127,61 @@ public abstract class GameObject extends Sprite
         return new Circle(centerX, centerY, damageRadius);
     }
 
+    public boolean isDead()
+    {
+        return isDead;
+    }
+
     // TODO: Anything else?
     public void destroy()
     {
         super.getTexture().dispose();
+        this.isDead = true;
     }
-
-    public abstract void update(float delta);
 
     public Vector2 getVector2()
     {
         super.setOriginCenter();
         return new Vector2(super.getX(), super.getY());
     }
+
+    /**
+     * Checks if the current entity is colliding with any other nearby entity (Tiles are also entities)
+     *
+     * @param newX The x value that the entity wants to move to
+     * @param newY The y value that the entity wants to move to
+     * @return True if the entity would collide at newX, newY
+     */
+    // TODO: fix whole method this is not working with current movement system
+    public GameObject isColliding(Collection<GameObject> gameObjects, float newX, float newY)
+    {
+        for (GameObject otherObject : gameObjects) // Looping through all neighbouring entities.
+        {
+            Rectangle intersectionRect = new Rectangle();
+
+            // Creating a new sprite at new position
+            Border b = new Border(this, 1, 1, 1, -1);
+            b.setX(newX);
+            b.setY(newY);
+            if (!this.equals(otherObject) && // Don't want to check for collisions between the same entity.
+                    Intersector.intersectRectangles(b.getBoundingRectangle(), otherObject.getBoundingRectangle(), intersectionRect)) // Bounding box collision detection.
+            {
+                // TODO: Better hit box or pix perfect with rotation
+                return otherObject;
+            }
+        }
+        return null;
+    }
+
+    public float getPixelAlpha(Vector2 vector2)
+    {
+        int pixelVal = pmap.getPixel((int) vector2.x, (int) vector2.y);
+        return new Color(pixelVal).a;
+    }
+
+    public abstract void onCollision(GameObject collidedObject, float delta);
+
+    public abstract void update(float delta);
 
     /**
      * This is how complexity is reduced from O(n^2)
@@ -135,56 +191,13 @@ public abstract class GameObject extends Sprite
      * @param entity Entity for which to find the neighbours of
      * @return List<Entity>
      */
-    public abstract List<GameObject> findNeighbours(GameObject entity); // TODO: implement this when grid is set up
+    public abstract List<GameObject> findNeighbours(GameObject entity);
+    // dTODO: implement this when grid is set up.
+    // Only find neighbours that the entity would care about
 
-    /**
-     * Checks if the current entity is colliding with any other nearby entity (Tiles are also entities)
-     *
-     * @param newX The x value that the entity wants to move to
-     * @param newY The y value that the entity wants to move to
-     * @return True if the entity would collide at newX, newY
-     */
-    private boolean isColliding(List<GameObject> gameObjects, float newX, float newY)
+    @Override
+    public String toString()
     {
-        for (GameObject otherEntity : gameObjects) // Looping through all neighbouring entities.
-        {
-            Rectangle intersectionRect = new Rectangle();
-            Rectangle playerBoundingBox = new Rectangle(super.getX(), super.getY(), super.getWidth(), super.getHeight());
-
-            if (this != otherEntity && // Don't want to check for collisions between the same entity.
-                    Intersector.intersectRectangles(playerBoundingBox, otherEntity.getBoundingRectangle(), intersectionRect)) // Bounding box collision detection.
-            {
-                for (int x = 0; x < intersectionRect.width; x++)
-                {
-                    for (int y = 0; y < intersectionRect.height; y++)
-                    {
-                        // finding the co-ordinates of the same pixels within the collided bounding box of the two
-                        // shapes and comparing them
-                        Vector2 entityPixPos = new Vector2(
-                                Math.abs(newX - intersectionRect.x) + x,
-                                Math.abs(newY - intersectionRect.y) + y);
-                        Vector2 otherEntityPixPos = new Vector2(
-                                Math.abs(otherEntity.getX() - intersectionRect.x) + x,
-                                Math.abs(otherEntity.getY() - intersectionRect.y) + y);
-
-                        // If neither are transparent then there is a collision
-                        // 0 alpha mean that the pixel is completely transparent
-                        if (this.getPixelAlpha(entityPixPos) != 0f
-                                && otherEntity.getPixelAlpha(otherEntityPixPos) != 0f)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return id + "";
     }
-
-    public float getPixelAlpha(Vector2 vector2)
-    {
-        int pixelVal = pmap.getPixel((int) vector2.x, (int) vector2.y);
-        return new Color(pixelVal).a;
-    }
-
 }

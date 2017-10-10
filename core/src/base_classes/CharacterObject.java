@@ -14,6 +14,7 @@ public abstract class CharacterObject extends GameObject
 {
     private int health, maxHealth;
     private float speed;
+    protected float dx, dy; // change in distance
 
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
@@ -26,12 +27,13 @@ public abstract class CharacterObject extends GameObject
      * @param damageRadius
      * @param level
      */
-    public CharacterObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed)
+    public CharacterObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level);
+        super(texture, srcWidth, srcHeight, damage, damageRadius, level, id);
         this.health = health;
         this.maxHealth = maxHealth;
         this.speed = speed;
+        dx = 0;
     }
 
     /**
@@ -42,12 +44,13 @@ public abstract class CharacterObject extends GameObject
      * @param damageRadius
      * @param level
      */
-    public CharacterObject(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed)
+    public CharacterObject(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
     {
-        super(sprite, damage, damageRadius, level);
+        super(sprite, damage, damageRadius, level, id);
         this.health = health;
         this.maxHealth = maxHealth;
         this.speed = speed;
+        dy = 0;
     }
 
     public void reduceHealth(int damagedAmount)
@@ -64,6 +67,16 @@ public abstract class CharacterObject extends GameObject
 
         if (health > maxHealth)
             health = maxHealth;
+    }
+
+    public float getDy()
+    {
+        return dy;
+    }
+
+    public float getDx()
+    {
+        return dx;
     }
 
     public float getSpeed()

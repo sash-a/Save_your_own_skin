@@ -2,7 +2,6 @@ package com.save_your_own_skin.game_objects;
 
 import base_classes.CharacterObject;
 import base_classes.GameObject;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
@@ -30,9 +29,9 @@ public class Enemy extends CharacterObject
      * @param maxHealth
      * @param speed
      */
-    public Enemy(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed)
+    public Enemy(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, health, maxHealth, speed);
+        super(texture, srcWidth, srcHeight, damage, damageRadius, level, health, maxHealth, speed, id);
     }
 
     /**
@@ -46,9 +45,16 @@ public class Enemy extends CharacterObject
      * @param maxHealth
      * @param speed
      */
-    public Enemy(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed)
+    public Enemy(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
     {
-        super(sprite, damage, damageRadius, level, health, maxHealth, speed);
+        super(sprite, damage, damageRadius, level, health, maxHealth, speed, id);
+    }
+
+    @Override
+    public void onCollision(GameObject collidedObject, float delta)
+    {
+        super.destroy();
+        System.out.println("hit: " + collidedObject.getID());
     }
 
     @Override

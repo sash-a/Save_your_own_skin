@@ -3,6 +3,7 @@ package base_classes;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.save_your_own_skin.interfaces.Upgradable;
+import utils.Level;
 
 /**
  * Save_your_own_skin
@@ -24,9 +25,9 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
      * @param damageRadius
      * @param level
      */
-    public PlaceableObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int cost, int upgradeCost)
+    public PlaceableObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int cost, int upgradeCost, int id)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level);
+        super(texture, srcWidth, srcHeight, damage, damageRadius, level, id);
         this.cost = cost;
         this.upgradeCost = upgradeCost;
     }
@@ -39,9 +40,9 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
      * @param damageRadius
      * @param level
      */
-    public PlaceableObject(Sprite sprite, float damage, float damageRadius, int level, int cost, int upgradeCosts)
+    public PlaceableObject(Sprite sprite, float damage, float damageRadius, int level, int cost, int upgradeCosts, int id)
     {
-        super(sprite, damage, damageRadius, level);
+        super(sprite, damage, damageRadius, level, id);
         this.cost = cost;
         this.upgradeCost = upgradeCost;
     }
@@ -66,18 +67,12 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
     @Override
     public void onUpgrade()
     {
-
     }
 
     @Override
     public void onLevelChange()
     {
-
     }
 
-    @Override
-    public void destroy()
-    {
-
-    }
+    public abstract void place(float x, float y, int[][] grid);
 }
