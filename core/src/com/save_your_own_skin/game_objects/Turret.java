@@ -4,6 +4,7 @@ import base_classes.GameObject;
 import base_classes.PlaceableObject;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
 
 import java.util.List;
 
@@ -50,12 +51,6 @@ public class Turret extends PlaceableObject
     }
 
     @Override
-    public void place(float x, float y, int[][] grid)
-    {
-
-    }
-
-    @Override
     public void onCollision(GameObject collidedObject, float delta)
     {
         if (collidedObject instanceof PlaceableObject)
@@ -68,6 +63,15 @@ public class Turret extends PlaceableObject
     public void update(float delta)
     {
 
+    }
+
+    public void pointTowardsEnemy(Enemy enemy)
+    {
+        // Point towards player
+        // Rotation
+        Vector2 dir = new Vector2(enemy.getX() - super.getX(), enemy.getY() - super.getY());
+        dir.rotate90(-1);
+        super.setRotation(dir.angle());
     }
 
     /**
@@ -84,4 +88,15 @@ public class Turret extends PlaceableObject
         return null;
     }
 
+
+    public Projectile attack(Projectile p, GameObject target)
+    {
+        Projectile projectile = new Projectile(p, p.getDamage(), p.getDamageRadius(), p.getLevel(), p.getID(), this, p.getSpeed());
+
+        // TODO: start firing from correct part of turret
+        projectile.setPosition(projectile.getParent().getX() + projectile.getParent().getWidth() / 2,
+                projectile.getParent().getY() + projectile.getParent().getHeight() / 2);
+
+        return projectile;
+    }
 }

@@ -73,6 +73,4 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
     public void onLevelChange()
     {
     }
-
-    public abstract void place(float x, float y, int[][] grid);
 }

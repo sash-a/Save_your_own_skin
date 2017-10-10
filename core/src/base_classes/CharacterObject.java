@@ -88,6 +88,4 @@ public abstract class CharacterObject extends GameObject
     {
         this.speed = speed;
     }
-
-
 }

@@ -135,7 +135,6 @@ public abstract class GameObject extends Sprite
     // TODO: Anything else?
     public void destroy()
     {
-        super.getTexture().dispose();
         this.isDead = true;
     }
 

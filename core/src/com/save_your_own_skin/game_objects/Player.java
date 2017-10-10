@@ -118,22 +118,12 @@ public class Player extends CharacterObject implements Upgradable
         if (Gdx.input.isKeyPressed(Keys.W))
         {
             angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
-//            if (angleY == 0)
-//                angleY += Math.PI;
-
             angleX = -(float) (Math.sin(Math.toRadians(super.getRotation())));
-//            if (angleX == 0)
-//                angleX += Math.PI;
         }
         if (Gdx.input.isKeyPressed(Keys.S))
         {
             angleY = -(float) (Math.cos(Math.toRadians(super.getRotation())));
-//            if (angleY == 0)
-//                angleY += Math.PI;
-
             angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
-//            if (angleX == 0)
-//                angleX += Math.PI;
         }
         // TODO: don't allow rotation if it leads to a collision
         if (Gdx.input.isKeyPressed(Keys.A))

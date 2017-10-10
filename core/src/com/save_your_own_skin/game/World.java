@@ -9,10 +9,7 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
-import com.save_your_own_skin.game_objects.Border;
-import com.save_your_own_skin.game_objects.Enemy;
-import com.save_your_own_skin.game_objects.Player;
-import com.save_your_own_skin.game_objects.Turret;
+import com.save_your_own_skin.game_objects.*;
 
 import java.security.Key;
 import java.util.*;
@@ -35,7 +32,9 @@ public class World extends ApplicationAdapter
 
     ShapeRenderer sr;
 
+    // TODO: better solution for this
     Map<Vector2, GameObject> gameObjectPositions;
+    List<Projectile> projectiles;
 
     public int[][] grid;
 
@@ -47,6 +46,8 @@ public class World extends ApplicationAdapter
         id = 0;
         batch = new SpriteBatch();
         grid = new int[MAP_WIDTH][MAP_HEIGHT];
+
+        projectiles = new ArrayList<Projectile>();
 
         playerTexture = new Texture("player.png");
         player = new Player(playerTexture, 20, 20, 1, 1, 1, 100, 100, 200, id);
@@ -137,7 +138,7 @@ public class World extends ApplicationAdapter
             player.translate(player.getDx(), player.getDy());
         }
 
-        PlaceableObject toPlace = null;
+        PlaceableObject toPlace;
         if (Gdx.input.isKeyPressed(Input.Keys.B))
         {
             toPlace = new Turret(borderTexture, 20, 20, 20, 20, 20, 1, 1, 1);
@@ -166,6 +167,43 @@ public class World extends ApplicationAdapter
                     gameObject.update(delta);
                     if (gameObject instanceof Enemy)
                         ((Enemy) gameObject).moveToPlayer(player, delta);
+
+                    // TODO: enemy that it points towards should be closest enemy to player
+                    if (gameObject instanceof Turret)
+                        ((Turret) gameObject).pointTowardsEnemy(enemy);
+                }
+
+                if (gameObject instanceof Turret)
+                {
+                    Turret turr = ((Turret) gameObject);
+                    Projectile p = new Projectile(playerTexture, 5, 5, 100, 50, 1, id++, turr, 20);
+                    // TODO: find a way to update make a unique vector for the projectile hashmap, id?
+                    projectiles.add(turr.attack(p, null));
+                }
+            }
+
+            Iterator itr = projectiles.iterator();
+
+            while (itr.hasNext())
+            {
+                Projectile projectile = (Projectile) itr.next();
+                if (!projectile.isDead())
+                {
+                    batch.draw(projectile,
+                            projectile.getX(),
+                            projectile.getY(),
+                            projectile.getOriginX(),
+                            projectile.getOriginY(),
+                            projectile.getWidth(),
+                            projectile.getHeight(),
+                            projectile.getScaleX(),
+                            projectile.getScaleY(),
+                            projectile.getRotation());
+                    projectile.update(delta);
+                }
+                else
+                {
+                    itr.remove();
                 }
             }
 
