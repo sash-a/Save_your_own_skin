@@ -4,15 +4,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.save_your_own_skin.game_objects.Border;
-import utils.Level;
+import com.save_your_own_skin.game_objects.Tile;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Save_your_own_skin
@@ -21,12 +18,13 @@ import java.util.List;
  */
 public abstract class GameObject extends Sprite
 {
-    //TODO: move id to front of constructor
-    private float damage, damageRadius;
-    private int level;
-    private Pixmap pmap;
+    /*
+    TODO: move id to front of constructor
+    TODO: consider moving damage, damage rad and rofto character obj
+    */
     private int id;
-    private boolean isDead;
+    private Pixmap pmap; // Not sure if using
+    private boolean isVisible;
 
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
@@ -36,16 +34,11 @@ public abstract class GameObject extends Sprite
      * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      */
-    public GameObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int id)
+    public GameObject(int id, Texture texture, int srcWidth, int srcHeight)
     {
         super(texture, srcWidth, srcHeight);
-        this.damage = damage;
-        this.damageRadius = damageRadius;
-        this.level = level;
         this.id = id;
-        this.isDead = false;
-
-        updatePixmap(texture);
+        isVisible = true;
     }
 
     /**
@@ -53,15 +46,11 @@ public abstract class GameObject extends Sprite
      *
      * @param sprite
      */
-    public GameObject(Sprite sprite, float damage, float damageRadius, int level, int id)
+    public GameObject(int id, Sprite sprite)
     {
         super(sprite);
-        this.damage = damage;
-        this.damageRadius = damageRadius;
-        this.level = level;
         this.id = id;
-
-        updatePixmap(sprite.getTexture());
+        this.isVisible = true;
     }
 
     private void updatePixmap(Texture texture)
@@ -72,32 +61,11 @@ public abstract class GameObject extends Sprite
         pmap = texture.getTextureData().consumePixmap();
     }
 
-    public float getDamage()
+    // Is this needed anymore?
+    public float getPixelAlpha(Vector2 vector2)
     {
-        return damage;
-    }
-
-    public void setDamage(float damage)
-    {
-        this.damage = damage;
-    }
-
-    public float getDamageRadius()
-    {
-        return damageRadius;
-    }
-
-    public void setDamageRadius(float damageRadius) {this.damageRadius = damageRadius;}
-
-    public int getLevel()
-    {
-        return level;
-    }
-
-    public void setLevel(int level)
-    {
-        this.level = level;
-        onLevelChange();
+        int pixelVal = pmap.getPixel((int) vector2.x, (int) vector2.y);
+        return new Color(pixelVal).a;
     }
 
     public int getID() {return id;}
@@ -108,34 +76,21 @@ public abstract class GameObject extends Sprite
         return other.getClass() == this.getClass() && ((GameObject) other).id == this.id;
     }
 
-    public void onLevelChange()
-    {
-        new Level(this.level, this).onLevelChange();
-    }
 
     public void attack(int damage, CharacterObject otherCharacter)
     {
         otherCharacter.reduceHealth(damage);
     }
 
-    // Is this the center of the sprite?
-    // TODO: Test!
-    public Circle createDamageableArea()
+    public boolean isVisible()
     {
-        float centerX = Math.abs(super.getX() + super.getWidth()) / 2;
-        float centerY = Math.abs(super.getY() + super.getHeight()) / 2;
-        return new Circle(centerX, centerY, damageRadius);
-    }
-
-    public boolean isDead()
-    {
-        return isDead;
+        return isVisible;
     }
 
     // TODO: Anything else?
     public void destroy()
     {
-        this.isDead = true;
+        this.isVisible = false;
     }
 
     public Vector2 getVector2()
@@ -151,48 +106,35 @@ public abstract class GameObject extends Sprite
      * @param newY The y value that the entity wants to move to
      * @return True if the entity would collide at newX, newY
      */
-    // TODO: fix whole method this is not working with current movement system
-    public GameObject isColliding(Collection<GameObject> gameObjects, float newX, float newY)
+    // TODO: Add in pixel collision test or polygon instead of rectangle
+    public GameObject isColliding(Collection<GameObject> gameObjects, float newX, float newY, float newRotation)
     {
-        for (GameObject otherObject : gameObjects) // Looping through all neighbouring entities.
+        for (GameObject otherObject : gameObjects) // Looping through all (ideally) neighbouring entities.
         {
+            if (otherObject instanceof Tile && !((Tile) otherObject).isCollidable())
+                continue;
+
             Rectangle intersectionRect = new Rectangle();
 
-            // Creating a new sprite at new position
-            Border b = new Border(this, 1, 1, 1, -1);
+            // Creating a new sprite at new position to use the bounding box method
+            Tile b = new Tile(1, this, true);
             b.setX(newX);
             b.setY(newY);
+            b.setRotation(newRotation);
+
             if (!this.equals(otherObject) && // Don't want to check for collisions between the same entity.
                     Intersector.intersectRectangles(b.getBoundingRectangle(), otherObject.getBoundingRectangle(), intersectionRect)) // Bounding box collision detection.
             {
-                // TODO: Better hit box or pix perfect with rotation
+                // Polygon
                 return otherObject;
             }
         }
         return null;
     }
 
-    public float getPixelAlpha(Vector2 vector2)
-    {
-        int pixelVal = pmap.getPixel((int) vector2.x, (int) vector2.y);
-        return new Color(pixelVal).a;
-    }
-
     public abstract void onCollision(GameObject collidedObject, float delta);
 
     public abstract void update(float delta);
-
-    /**
-     * This is how complexity is reduced from O(n^2)
-     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
-     * only search through these few entities
-     *
-     * @param entity Entity for which to find the neighbours of
-     * @return List<Entity>
-     */
-    public abstract List<GameObject> findNeighbours(GameObject entity);
-    // dTODO: implement this when grid is set up.
-    // Only find neighbours that the entity would care about
 
     @Override
     public String toString()

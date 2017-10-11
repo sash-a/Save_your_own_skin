@@ -8,37 +8,43 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game_objects.*;
 
-import java.security.Key;
 import java.util.*;
 
 public class World extends ApplicationAdapter
 {
-    public static final int WORLD_WIDTH = 800;
-    public static final int WORLD_HEIGHT = 800;
-    public static final int TILE_SIZE = 20;
-    public static final int MAP_HEIGHT = 40;
-    public static final int MAP_WIDTH = 40;
+    // TODO: implement global speed mod
+    public static final int WORLD_WIDTH = 750;
+    public static final int WORLD_HEIGHT = 750;
+    public static final int TILE_SIZE = 30;
+    public static final int MAP_HEIGHT = 25;
+    public static final int MAP_WIDTH = 25;
 
 
     SpriteBatch batch;
+
     Texture playerTexture;
     Player player;
+
     Texture enemyTexture;
     Enemy enemy;
-    Texture borderTexture;
-
-    ShapeRenderer sr;
 
     // TODO: better solution for this
-    Map<Vector2, GameObject> gameObjectPositions;
-    List<Projectile> projectiles;
+    Map<Vector2, GameObject> gameObjectPositions; // All game objects
+    List<Projectile> projectiles; // All projectiles current projectiles
+    List<Enemy> enemies; // All alive enemies
+    List<PlaceableObject> placeables; // All placeables
+    List<Tile> tiles;
+
 
     public int[][] grid;
 
     private int id;
+    // for debug
+    ShapeRenderer sr;
 
     @Override
     public void create()
@@ -47,58 +53,87 @@ public class World extends ApplicationAdapter
         batch = new SpriteBatch();
         grid = new int[MAP_WIDTH][MAP_HEIGHT];
 
+        gameObjectPositions = new HashMap<Vector2, GameObject>();
         projectiles = new ArrayList<Projectile>();
+        enemies = new ArrayList<Enemy>();
+
 
         playerTexture = new Texture("player.png");
-        player = new Player(playerTexture, 20, 20, 1, 1, 1, 100, 100, 200, id);
+        player = new Player(++id, playerTexture, 30, 30, 50, 60, 1000000, 1, 100, 100, 200);
         player.setX(50);
         player.setY(50);
-        id++;
 
         enemyTexture = new Texture("enemy.png");
-        enemy = new Enemy(enemyTexture, 20, 20, 1, 1, 1, 100, 100, 210, id);
+        enemy = new Enemy(++id, enemyTexture, 30, 30, 50, 30, 60, 1, 100, 100, 200);
         enemy.setPosition(400, 400);
-        id++;
 
-        borderTexture = new Texture("block.png");
-        List<Border> borders = createMap();
+
+        tiles = createMap();
 
         // TODO: put method?
-        gameObjectPositions = new HashMap<Vector2, GameObject>();
         gameObjectPositions.put(player.getVector2(), player);
         gameObjectPositions.put(enemy.getVector2(), enemy);
-        for (Border border : borders)
+        for (Tile tile : tiles)
         {
-            gameObjectPositions.put(border.getVector2(), border);
+            gameObjectPositions.put(tile.getVector2(), tile);
         }
+
+
+        //borderTextures.add(new Texture())
         // Debug
         sr = new ShapeRenderer();
     }
 
-    private List<Border> createMap()
+    private List<Tile> createMap()
     {
-        List<Border> borders = new ArrayList<Border>();
+        List<Texture> borderTextures = new ArrayList<Texture>();
+        borderTextures.add(new Texture("orange_brick.png"));
+        borderTextures.add(new Texture("brown_brick.png"));
+
+        List<Texture> floorTextures = new ArrayList<Texture>();
+        floorTextures.add(new Texture("green_brick.png"));
+        floorTextures.add(new Texture("grey_brick.png"));
+
+        List<Tile> tiles = new ArrayList<Tile>();
         for (int i = 0; i < MAP_WIDTH; i++)
         {
             for (int j = 0; j < MAP_HEIGHT; j++)
             {
-                if (i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1)
+                // TODO: create hole in top center of map
+                if ((i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1))
                 {
-                    Border b = new Border(borderTexture, TILE_SIZE, TILE_SIZE, 0, 0, 0, id);
+                    Texture t = borderTextures.get((int) (Math.random() * 2));
+                    Tile b = new Tile(++id, t, TILE_SIZE, TILE_SIZE, true);
                     b.setPosition(i * TILE_SIZE, j * TILE_SIZE);
-                    borders.add(b);
-                    id++;
+                    tiles.add(b);
 
-                    grid[i][j] = 0;
+                    grid[i][j] = 1;
                 }
                 else
                 {
-                    grid[i][j] = 1;
+                    grid[i][j] = 0;
+                    Texture t = floorTextures.get((int) (Math.random()));
+                    Tile b = new Tile(++id, t, TILE_SIZE, TILE_SIZE, false);
+                    b.setPosition(i * TILE_SIZE, j * TILE_SIZE);
+                    tiles.add(b);
                 }
             }
         }
 
-        return borders;
+        return tiles;
+    }
+
+    /**
+     * This is how complexity is reduced from O(n^2)
+     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
+     * only search through these few entities
+     *
+     * @param entity Entity for which to find the neighbours of
+     * @return List<Entity>
+     */
+    public List<GameObject> findNeighbours(GameObject entity)
+    {
+        return null;
     }
 
     public static int toGridPos(float pos)
@@ -120,12 +155,13 @@ public class World extends ApplicationAdapter
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
 
-        player.handleInput(delta);
+        // Player movement and collision
+        player.update(delta);
 
-        // Just player
         GameObject collided = player.isColliding(gameObjectPositions.values(),
                 player.getX() + player.getDx(),
-                player.getY() + player.getDy());
+                player.getY() + player.getDy(),
+                player.getRotation() + player.getChangeInRotation());
         if (collided != null)
         {
             collided.onCollision(player, delta);
@@ -135,98 +171,123 @@ public class World extends ApplicationAdapter
         }
         else
         {
+            player.rotate(player.getChangeInRotation());
             player.translate(player.getDx(), player.getDy());
         }
 
         PlaceableObject toPlace;
         if (Gdx.input.isKeyPressed(Input.Keys.B))
         {
-            toPlace = new Turret(borderTexture, 20, 20, 20, 20, 20, 1, 1, 1);
-            player.place(toPlace);
+            toPlace = new Turret(++id,
+                    playerTexture,
+                    15,
+                    15,
+                    10,
+                    5,
+                    1,
+                    2,
+                    TILE_SIZE * 3,
+                    100000000);
+            player.place(toPlace, grid);
             gameObjectPositions.put(new Vector2(toPlace.getX(), toPlace.getY()), toPlace);
+        }
+
+        /*____________________________________________________________________________________________________________*/
+
+        // Draw tiles first
+        for (Tile tile : tiles)
+        {
+            batch.draw(tile,
+                    tile.getX(),
+                    tile.getY(),
+                    tile.getOriginX(),
+                    tile.getOriginY(),
+                    tile.getWidth(),
+                    tile.getHeight(),
+                    tile.getScaleX(),
+                    tile.getScaleY(),
+                    tile.getRotation());
         }
 
         for (GameObject gameObject : gameObjectPositions.values())
         {
-            if (!gameObject.isDead())
+            if (!gameObject.isVisible()) continue;
+
+            if (gameObject instanceof Tile) continue;
+
+            // Draw game objects if not dead
+            batch.draw(gameObject,
+                    gameObject.getX(),
+                    gameObject.getY(),
+                    gameObject.getOriginX(),
+                    gameObject.getOriginY(),
+                    gameObject.getWidth(),
+                    gameObject.getHeight(),
+                    gameObject.getScaleX(),
+                    gameObject.getScaleY(),
+                    gameObject.getRotation());
+
+            // Player updates and input handling done above
+            if ((gameObject instanceof Player)) continue;
+            gameObject.update(delta);
+
+            if (gameObject instanceof Enemy)
+                ((Enemy) gameObject).moveToPlayer(player, delta);
+
+            // TODO: enemy that it points towards should be closest enemy to player
+            if (gameObject instanceof Turret)
             {
-                // Draw game objects
-                batch.draw(gameObject,
-                        gameObject.getX(),
-                        gameObject.getY(),
-                        gameObject.getOriginX(),
-                        gameObject.getOriginY(),
-                        gameObject.getWidth(),
-                        gameObject.getHeight(),
-                        gameObject.getScaleX(),
-                        gameObject.getScaleY(),
-                        gameObject.getRotation());
+                Turret turret = (Turret) gameObject;
 
-                if (!(gameObject instanceof Player))
-                {
-                    gameObject.update(delta);
-                    if (gameObject instanceof Enemy)
-                        ((Enemy) gameObject).moveToPlayer(player, delta);
+                turret.pointTowardsEnemy(enemy);
 
-                    // TODO: enemy that it points towards should be closest enemy to player
-                    if (gameObject instanceof Turret)
-                        ((Turret) gameObject).pointTowardsEnemy(enemy);
-                }
+                // Shoot
+                Projectile p = new Projectile(++id, enemyTexture, 5, 5, turret, 500);
 
-                if (gameObject instanceof Turret)
-                {
-                    Turret turr = ((Turret) gameObject);
-                    Projectile p = new Projectile(playerTexture, 5, 5, 100, 50, 1, id++, turr, 20);
-                    // TODO: find a way to update make a unique vector for the projectile hashmap, id?
-                    projectiles.add(turr.attack(p, null));
-                }
+                // TODO: find a way to update make a unique vector for the projectile hashmap, id?
+                Projectile spawned = turret.spawnProjectile(p, null, System.nanoTime(), ++id);
+                if (spawned == null)
+                    continue;
+
+                projectiles.add(spawned);
             }
-
-            Iterator itr = projectiles.iterator();
-
-            while (itr.hasNext())
-            {
-                Projectile projectile = (Projectile) itr.next();
-                if (!projectile.isDead())
-                {
-                    batch.draw(projectile,
-                            projectile.getX(),
-                            projectile.getY(),
-                            projectile.getOriginX(),
-                            projectile.getOriginY(),
-                            projectile.getWidth(),
-                            projectile.getHeight(),
-                            projectile.getScaleX(),
-                            projectile.getScaleY(),
-                            projectile.getRotation());
-                    projectile.update(delta);
-                }
-                else
-                {
-                    itr.remove();
-                }
-            }
-
         }
 
+        // Separate loop for projectiles
+        Iterator itr = projectiles.iterator();
+        while (itr.hasNext())
+        {
+            Projectile projectile = (Projectile) itr.next();
 
-//        if (!enemy.isDead())
-//        {
-//            batch.draw(enemy, enemy.getX(), enemy.getY(), enemy.getOriginX(), enemy.getOriginY(), enemy.getWidth(), enemy.getHeight(), enemy.getScaleX(), enemy.getScaleY(), enemy.getRotation());
-//        }
-//        player.translate((float) (5 * Math.sin(player.getRotation() * Math.PI / 180)), (float) (5 * Math.cos(player.getRotation() * Math.PI / 180)));
-//        player.rotate(1f);
+            if (projectile.isVisible())
+            {
+                batch.draw(projectile,
+                        projectile.getX(),
+                        projectile.getY(),
+                        projectile.getOriginX(),
+                        projectile.getOriginY(),
+                        projectile.getWidth(),
+                        projectile.getHeight(),
+                        projectile.getScaleX(),
+                        projectile.getScaleY(),
+                        projectile.getRotation());
+                projectile.update(delta);
+            }
+            else
+            {
+                itr.remove();
+            }
+        }
 
         batch.end();
 
-
         // Debug
-//        Rectangle r = player.getBoundingRectangle();
-//
-//        sr.begin(ShapeRenderer.ShapeType.Line);
-//        sr.setColor(new Color(1, 1, 1, 0));
-//        sr.rect(r.getX(), r.getY(), r.getWidth(), r.getHeight());
-//        sr.end();
+        Rectangle r = player.getBoundingRectangle();
+
+        sr.begin(ShapeRenderer.ShapeType.Line);
+        sr.setColor(new Color(1, 1, 1, 0));
+        sr.rect(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+        sr.end();
     }
 
     @Override

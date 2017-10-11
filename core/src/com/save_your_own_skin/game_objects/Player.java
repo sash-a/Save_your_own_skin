@@ -24,38 +24,41 @@ import java.util.List;
 public class Player extends CharacterObject implements Upgradable
 {
     /**
-     * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
-     * will be 0,0.
+     * Creates a sprite with width, height, and texture region equal to the specified size.
      *
+     * @param id
      * @param texture
      * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
      * @param damage
      * @param damageRadius
+     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    public Player(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
+    public Player(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, health, maxHealth, speed, id);
+        super(id, texture, srcWidth, srcHeight, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
     }
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
      *
+     * @param id
      * @param sprite
      * @param damage
      * @param damageRadius
+     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    public Player(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
+    public Player(int id, Sprite sprite, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
-        super(sprite, damage, damageRadius, level, health, maxHealth, speed, id);
+        super(id, sprite, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
     }
 
     @Override
@@ -79,7 +82,6 @@ public class Player extends CharacterObject implements Upgradable
     @Override
     public void onCollision(GameObject collidedObject, float delta)
     {
-        System.out.println("Collided");
         if (collidedObject instanceof CharacterObject)
             update(delta);
     }
@@ -87,21 +89,7 @@ public class Player extends CharacterObject implements Upgradable
     @Override
     public void update(float delta)
     {
-
-    }
-
-    /**
-     * This is how complexity is reduced from O(n^2)
-     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
-     * only search through these few entities
-     *
-     * @param entity Entity for which to find the neighbours of
-     * @return List<Entity>
-     */
-    @Override
-    public List<GameObject> findNeighbours(GameObject entity)
-    {
-        return null;
+        handleInput(delta);
     }
 
     /**
@@ -112,9 +100,11 @@ public class Player extends CharacterObject implements Upgradable
      */
     public void handleInput(float delta)
     {
+        // So that if player isn't pressing keys obj this stop
         float angleX = 0;
         float angleY = 0;
-        // TODO: Find a better solution than adding pi to rotation
+        changeInRotation = 0;
+
         if (Gdx.input.isKeyPressed(Keys.W))
         {
             angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
@@ -125,34 +115,36 @@ public class Player extends CharacterObject implements Upgradable
             angleY = -(float) (Math.cos(Math.toRadians(super.getRotation())));
             angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
         }
-        // TODO: don't allow rotation if it leads to a collision
+
         if (Gdx.input.isKeyPressed(Keys.A))
         {
-            super.rotate(5);
+            changeInRotation = 5;
         }
         if (Gdx.input.isKeyPressed(Keys.D))
         {
-            super.rotate(-5);
+            changeInRotation = -5;
         }
-
-        // TODO: fix is collision with new x and y and put it here
-        // Point towards mouse
-//        float mouseX = Gdx.input.getX();
-//        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-//
-//        Vector2 dir = new Vector2(mouseX - super.getX(), mouseY - super.getY());
-//        dir.rotate90(-1);
-//        super.setRotation(dir.angle());
 
         dx = angleX * super.getSpeed() * delta;
         dy = angleY * super.getSpeed() * delta;
+
+        // Point towards mouse
+        /*
+        float mouseX = Gdx.input.getX();
+        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+
+        Vector2 dir = new Vector2(mouseX - super.getX(), mouseY - super.getY());
+        dir.rotate90(-1);
+        super.setRotation(dir.angle());
+        */
     }
 
-    public boolean place(PlaceableObject obj)
+    public boolean place(PlaceableObject obj, int[][] grid)
     {
         // Find direction to place block in
         float roundedDirection = 90 * (float) Math.round(super.getRotation() / 90);
-        // Normalize direction (to less than  360)
+
+        // Normalize direction (0 >= dir >= 360)
         while (roundedDirection > 360)
             roundedDirection -= 360;
 
@@ -163,18 +155,20 @@ public class Player extends CharacterObject implements Upgradable
         float angleX = -(float) (Math.sin(Math.toRadians(super.getRotation())));
 
         if (roundedDirection == 0 || roundedDirection == 360)
-            angleY += World.TILE_SIZE;
+            angleY += 2 * World.TILE_SIZE;
         else if (roundedDirection == 90)
-            angleX -= World.TILE_SIZE;
+            angleX -= 2 * World.TILE_SIZE;
         else if (roundedDirection == 180)
-            angleY -= World.TILE_SIZE;
+            angleY -= 2 * World.TILE_SIZE;
         else
-            angleX += World.TILE_SIZE;
+            angleX += 2 * World.TILE_SIZE;
 
+        int xPos = World.toGridPos(super.getX() + angleX);
+        int yPos = World.toGridPos(super.getY() + angleY);
 
-        obj.setPosition(super.getX() + angleX,
-                super.getY() + angleY);
-
+        obj.setPosition(World.toAbsolutePos(xPos) + World.TILE_SIZE / 4, World.toAbsolutePos(yPos) + World.TILE_SIZE / 4);
+        grid[xPos][yPos] = 2;
+        // TODO: snap to grid and return false if something is already there
         return true;
     }
 

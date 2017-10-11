@@ -5,6 +5,7 @@ import base_classes.PlaceableObject;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
+import javafx.scene.Parent;
 
 import java.util.List;
 
@@ -15,39 +16,46 @@ import java.util.List;
  */
 public class Turret extends PlaceableObject
 {
+    private float lastAttackTime;
+    private float bulletSpeed;
+    private float damage, damageRadius, rateOfFire;
+
     /**
-     * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
-     * will be 0,0.
+     * Creates a sprite with width, height, and texture region equal to the specified size.
      *
+     * @param id
      * @param texture
-     * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
-     * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
-     * @param damage
-     * @param damageRadius
-     * @param level
+     * @param srcWidth    The width of the texture region. May be negative to flip the sprite when drawn.
+     * @param srcHeight   The height of the texture region. May be negative to flip the sprite when drawn.
      * @param cost
      * @param upgradeCost
-     * @param id
+     * @param level
      */
-    public Turret(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int cost, int upgradeCost, int id)
+    public Turret(int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, cost, upgradeCost, id);
+        super(id, texture, srcWidth, srcHeight, cost, upgradeCost, level);
+        this.lastAttackTime = System.nanoTime();
+        this.damage = damage;
+        this.damageRadius = damageRadius;
+        this.rateOfFire = rateOfFire;
     }
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
      *
-     * @param sprite
-     * @param damage
-     * @param damageRadius
-     * @param level
-     * @param cost
-     * @param upgradeCosts
      * @param id
+     * @param sprite
+     * @param cost
+     * @param upgradeCost
+     * @param level
      */
-    public Turret(Sprite sprite, float damage, float damageRadius, int level, int cost, int upgradeCosts, int id)
+    public Turret(int id, Sprite sprite, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire)
     {
-        super(sprite, damage, damageRadius, level, cost, upgradeCosts, id);
+        super(id, sprite, cost, upgradeCost, level);
+        this.lastAttackTime = System.nanoTime();
+        this.damage = damage;
+        this.damageRadius = damageRadius;
+        this.rateOfFire = rateOfFire;
     }
 
     @Override
@@ -74,29 +82,34 @@ public class Turret extends PlaceableObject
         super.setRotation(dir.angle());
     }
 
-    /**
-     * This is how complexity is reduced from O(n^2)
-     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
-     * only search through these few entities
-     *
-     * @param entity Entity for which to find the neighbours of
-     * @return List<Entity>
-     */
-    @Override
-    public List<GameObject> findNeighbours(GameObject entity)
+    public Projectile spawnProjectile(Projectile p, GameObject target, float time, int id)
     {
-        return null;
-    }
+        if (Math.abs(time - lastAttackTime) < rateOfFire)
+            return null;
 
-
-    public Projectile attack(Projectile p, GameObject target)
-    {
-        Projectile projectile = new Projectile(p, p.getDamage(), p.getDamageRadius(), p.getLevel(), p.getID(), this, p.getSpeed());
+        lastAttackTime = time;
+        // TODO: unique ID and aim at target
+        Projectile projectile = new Projectile(++id, p, this, bulletSpeed);
 
         // TODO: start firing from correct part of turret
         projectile.setPosition(projectile.getParent().getX() + projectile.getParent().getWidth() / 2,
                 projectile.getParent().getY() + projectile.getParent().getHeight() / 2);
 
         return projectile;
+    }
+
+    public float getDamage()
+    {
+        return damage;
+    }
+
+    public float getDamageRadius()
+    {
+        return damageRadius;
+    }
+
+    public float getRateOfFire()
+    {
+        return rateOfFire;
     }
 }

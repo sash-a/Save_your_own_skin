@@ -17,51 +17,49 @@ import java.util.List;
  */
 public class Projectile extends GameObject implements Intractable
 {
-    private PlaceableObject parent;
+    private Turret parent;
     private float speed;
 
     // TODO: rotation may need to be slightly ahead of the player
+
+
     /**
-     * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
-     * will be 0,0.
+     * Creates a sprite with width, height, and texture region equal to the specified size.
      *
-     * @param texture
-     * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
-     * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
-     * @param damage
-     * @param damageRadius
-     * @param level
      * @param id
+     * @param texture
+     * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
+     * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      */
-    public Projectile(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int id, PlaceableObject parent, float speed)
+    public Projectile(int id, Texture texture, int srcWidth, int srcHeight, Turret parent, float speed)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, id);
+        super(id, texture, srcWidth, srcHeight);
         this.parent = parent;
         this.speed = speed;
-        super.setRotation(parent.getRotation());
     }
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
      *
-     * @param sprite
-     * @param damage
-     * @param damageRadius
-     * @param level
      * @param id
+     * @param sprite
      */
-    public Projectile(Sprite sprite, float damage, float damageRadius, int level, int id, PlaceableObject parent, float speed)
+    public Projectile(int id, Sprite sprite, Turret parent, float speed)
     {
-        super(sprite, damage, damageRadius, level, id);
+        super(id, sprite);
         this.parent = parent;
         this.speed = speed;
-        super.setRotation(parent.getRotation());
     }
 
     @Override
     public void onCollision(GameObject collidedObject, float delta)
     {
-        destroy();
+        if (collidedObject instanceof Enemy)
+        {
+            super.attack((int) parent.getDamage(), (Enemy) collidedObject);
+            collidedObject.onCollision(this, delta);
+            destroy();
+        }
     }
 
     @Override
@@ -73,8 +71,9 @@ public class Projectile extends GameObject implements Intractable
 
         double hypot = Math.pow(yDistFromStartingPoint, 2) + Math.pow(xDistFromStartingPoint, 2);
 
-        if (hypot > Math.pow(super.getDamageRadius(), 2))
+        if (hypot > Math.pow(parent.getDamageRadius(), 2))
         {
+            System.out.println("ded");
             destroy();
             return;
         }
@@ -86,18 +85,10 @@ public class Projectile extends GameObject implements Intractable
         translate(this.speed * delta * angleX, this.speed * delta * angleY);
     }
 
-    /**
-     * This is how complexity is reduced from O(n^2)
-     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
-     * only search through these few entities
-     *
-     * @param entity Entity for which to find the neighbours of
-     * @return List<Entity>
-     */
     @Override
-    public List<GameObject> findNeighbours(GameObject entity)
+    public void onLevelChange()
     {
-        return null;
+
     }
 
     @Override

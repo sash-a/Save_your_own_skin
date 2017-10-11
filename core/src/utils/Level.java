@@ -33,8 +33,8 @@ public class Level
         }
 
         // Changing the damage values
-        obj.setDamage(obj.getDamage() * damageMod);
-        obj.setDamageRadius(obj.getDamage() * rangeMod);
+//        obj.setDamage(obj.getDamage() * damageMod);
+//        obj.setDamageRadius(obj.getDamage() * rangeMod);
 
         if (obj instanceof PlaceableObject)
             ((PlaceableObject) obj).setUpgradeCost(((PlaceableObject) obj).getUpgradeCost() * costMod);

@@ -7,4 +7,6 @@ package com.save_your_own_skin.game_objects;
  */
 public class FloorTile
 {
+    private float damage, rateOfFire;
+
 }

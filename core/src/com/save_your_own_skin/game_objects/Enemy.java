@@ -16,38 +16,41 @@ import java.util.List;
 public class Enemy extends CharacterObject
 {
     /**
-     * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
-     * will be 0,0.
+     * Creates a sprite with width, height, and texture region equal to the specified size.
      *
+     * @param id
      * @param texture
      * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
      * @param damage
      * @param damageRadius
+     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    public Enemy(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
+    public Enemy(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, health, maxHealth, speed, id);
+        super(id, texture, srcWidth, srcHeight, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
     }
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
      *
+     * @param id
      * @param sprite
      * @param damage
      * @param damageRadius
+     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    public Enemy(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
+    public Enemy(int id, Sprite sprite, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
-        super(sprite, damage, damageRadius, level, health, maxHealth, speed, id);
+        super(id, sprite, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
     }
 
     @Override
@@ -61,20 +64,6 @@ public class Enemy extends CharacterObject
     public void update(float delta)
     {
 
-    }
-
-    /**
-     * This is how complexity is reduced from O(n^2)
-     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
-     * only search through these few entities
-     *
-     * @param entity Entity for which to find the neighbours of
-     * @return List<Entity>
-     */
-    @Override
-    public List<GameObject> findNeighbours(GameObject entity)
-    {
-        return null;
     }
 
     // TODO: find a way to call this in update

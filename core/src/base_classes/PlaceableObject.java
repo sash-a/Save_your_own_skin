@@ -13,38 +13,36 @@ import utils.Level;
 public abstract class PlaceableObject extends GameObject implements Upgradable
 {
     private int cost, upgradeCost;
+    private int level;
 
     /**
-     * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
-     * will be 0,0.
+     * Creates a sprite with width, height, and texture region equal to the specified size.
      *
+     * @param id
      * @param texture
-     * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
-     * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
-     * @param damage
-     * @param damageRadius
-     * @param level
+     * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
+     * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      */
-    public PlaceableObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int cost, int upgradeCost, int id)
+    public PlaceableObject(int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level)
     {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, id);
+        super(id, texture, srcWidth, srcHeight);
         this.cost = cost;
         this.upgradeCost = upgradeCost;
+        this.level = level;
     }
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
      *
+     * @param id
      * @param sprite
-     * @param damage
-     * @param damageRadius
-     * @param level
      */
-    public PlaceableObject(Sprite sprite, float damage, float damageRadius, int level, int cost, int upgradeCosts, int id)
+    public PlaceableObject(int id, Sprite sprite, int cost, int upgradeCost, int level)
     {
-        super(sprite, damage, damageRadius, level, id);
+        super(id, sprite);
         this.cost = cost;
         this.upgradeCost = upgradeCost;
+        this.level = level;
     }
 
     public int getCost()
@@ -69,8 +67,4 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
     {
     }
 
-    @Override
-    public void onLevelChange()
-    {
-    }
 }

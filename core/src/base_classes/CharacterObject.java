@@ -12,9 +12,49 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
  */
 public abstract class CharacterObject extends GameObject
 {
+    private float damage, damageRadius, rateOfFire;
+    private int level;
     private int health, maxHealth;
     private float speed;
-    protected float dx, dy; // change in distance
+    protected float dx, dy, changeInRotation; // change in distance
+
+    /**
+     * Creates a sprite with width, height, and texture region equal to the specified size.
+     *
+     * @param id
+     * @param texture
+     * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
+     * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
+     */
+    public CharacterObject(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    {
+        super(id, texture, srcWidth, srcHeight);
+        this.damage = damage;
+        this.damageRadius = damageRadius;
+        this.rateOfFire = rateOfFire;
+        this.level = level;
+        this.health = health;
+        this.maxHealth = maxHealth;
+        this.speed = speed;
+    }
+
+    /**
+     * Creates a sprite that is a copy in every way of the specified sprite.
+     *
+     * @param id
+     * @param sprite
+     */
+    public CharacterObject(int id, Sprite sprite, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    {
+        super(id, sprite);
+        this.damage = damage;
+        this.damageRadius = damageRadius;
+        this.rateOfFire = rateOfFire;
+        this.level = level;
+        this.health = health;
+        this.maxHealth = maxHealth;
+        this.speed = speed;
+    }
 
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
@@ -27,31 +67,7 @@ public abstract class CharacterObject extends GameObject
      * @param damageRadius
      * @param level
      */
-    public CharacterObject(Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
-    {
-        super(texture, srcWidth, srcHeight, damage, damageRadius, level, id);
-        this.health = health;
-        this.maxHealth = maxHealth;
-        this.speed = speed;
-        dx = 0;
-    }
 
-    /**
-     * Creates a sprite that is a copy in every way of the specified sprite.
-     *
-     * @param sprite
-     * @param damage
-     * @param damageRadius
-     * @param level
-     */
-    public CharacterObject(Sprite sprite, float damage, float damageRadius, int level, int health, int maxHealth, float speed, int id)
-    {
-        super(sprite, damage, damageRadius, level, id);
-        this.health = health;
-        this.maxHealth = maxHealth;
-        this.speed = speed;
-        dy = 0;
-    }
 
     public void reduceHealth(int damagedAmount)
     {
@@ -77,6 +93,11 @@ public abstract class CharacterObject extends GameObject
     public float getDx()
     {
         return dx;
+    }
+
+    public float getChangeInRotation()
+    {
+        return changeInRotation;
     }
 
     public float getSpeed()
