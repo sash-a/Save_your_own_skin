@@ -8,6 +8,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game_objects.*;
@@ -99,8 +100,8 @@ public class World extends ApplicationAdapter
         {
             for (int j = 0; j < MAP_HEIGHT; j++)
             {
-                // TODO: create hole in top center of map
-                if ((i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1))
+                if ((i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1)
+                        && !(i == MAP_WIDTH / 2 && j == MAP_HEIGHT - 1))
                 {
                     Texture t = borderTextures.get((int) (Math.random() * 2));
                     Tile b = new Tile(++id, t, TILE_SIZE, TILE_SIZE, true);
@@ -171,8 +172,7 @@ public class World extends ApplicationAdapter
         }
         else
         {
-            player.rotate(player.getChangeInRotation());
-            player.translate(player.getDx(), player.getDy());
+            player.move();
         }
 
         PlaceableObject toPlace;
@@ -187,7 +187,8 @@ public class World extends ApplicationAdapter
                     1,
                     2,
                     TILE_SIZE * 3,
-                    100000000);
+                    100000000,
+                    200);
             player.place(toPlace, grid);
             gameObjectPositions.put(new Vector2(toPlace.getX(), toPlace.getY()), toPlace);
         }
@@ -239,17 +240,23 @@ public class World extends ApplicationAdapter
             {
                 Turret turret = (Turret) gameObject;
 
-                turret.pointTowardsEnemy(enemy);
-
                 // Shoot
-                Projectile p = new Projectile(++id, enemyTexture, 5, 5, turret, 500);
+                Projectile p = new Projectile(++id, enemyTexture, 5, 5, turret);
 
                 // TODO: find a way to update make a unique vector for the projectile hashmap, id?
-                Projectile spawned = turret.spawnProjectile(p, null, System.nanoTime(), ++id);
-                if (spawned == null)
-                    continue;
+                for (Enemy e : enemies)
+                {
+                    if (!Intersector.overlaps(turret.getRange(), e.getBoundingRectangle()))
+                        continue;
+                    turret.pointTowardsEnemy(enemy); // TODO: make this closest enemy
 
-                projectiles.add(spawned);
+                    Projectile spawned = turret.spawnProjectile(p, null, System.nanoTime(), ++id);
+                    if (spawned == null)
+                        continue;
+
+                    projectiles.add(spawned);
+                }
+
             }
         }
 

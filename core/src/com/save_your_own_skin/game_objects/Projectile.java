@@ -18,7 +18,6 @@ import java.util.List;
 public class Projectile extends GameObject implements Intractable
 {
     private Turret parent;
-    private float speed;
 
     // TODO: rotation may need to be slightly ahead of the player
 
@@ -31,11 +30,10 @@ public class Projectile extends GameObject implements Intractable
      * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      */
-    public Projectile(int id, Texture texture, int srcWidth, int srcHeight, Turret parent, float speed)
+    public Projectile(int id, Texture texture, int srcWidth, int srcHeight, Turret parent)
     {
         super(id, texture, srcWidth, srcHeight);
         this.parent = parent;
-        this.speed = speed;
     }
 
     /**
@@ -44,11 +42,10 @@ public class Projectile extends GameObject implements Intractable
      * @param id
      * @param sprite
      */
-    public Projectile(int id, Sprite sprite, Turret parent, float speed)
+    public Projectile(int id, Sprite sprite, Turret parent)
     {
         super(id, sprite);
         this.parent = parent;
-        this.speed = speed;
     }
 
     @Override
@@ -59,7 +56,11 @@ public class Projectile extends GameObject implements Intractable
             super.attack((int) parent.getDamage(), (Enemy) collidedObject);
             collidedObject.onCollision(this, delta);
             destroy();
+            return;
         }
+
+        super.translate(-(float) (Math.sin(Math.toRadians(super.getRotation()))),
+                (float) (Math.cos(Math.toRadians(super.getRotation()))));
     }
 
     @Override
@@ -73,16 +74,15 @@ public class Projectile extends GameObject implements Intractable
 
         if (hypot > Math.pow(parent.getDamageRadius(), 2))
         {
-            System.out.println("ded");
             destroy();
             return;
         }
 
         // Movement
-        float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
-        float angleX = -(float) (Math.sin(Math.toRadians(super.getRotation())));
+        float angleY = (float) (Math.cos(Math.toRadians(parent.getRotation())));
+        float angleX = -(float) (Math.sin(Math.toRadians(parent.getRotation())));
 
-        translate(this.speed * delta * angleX, this.speed * delta * angleY);
+        translate(parent.getBulletSpeed() * delta * angleX, parent.getBulletSpeed() * delta * angleY);
     }
 
     @Override
@@ -101,11 +101,6 @@ public class Projectile extends GameObject implements Intractable
     public Circle createDamageableArea(float damageRadius)
     {
         return null;
-    }
-
-    public float getSpeed()
-    {
-        return speed;
     }
 
     public PlaceableObject getParent()

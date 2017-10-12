@@ -83,7 +83,9 @@ public class Player extends CharacterObject implements Upgradable
     public void onCollision(GameObject collidedObject, float delta)
     {
         if (collidedObject instanceof CharacterObject)
+        {
             update(delta);
+        }
     }
 
     @Override
@@ -170,6 +172,12 @@ public class Player extends CharacterObject implements Upgradable
         grid[xPos][yPos] = 2;
         // TODO: snap to grid and return false if something is already there
         return true;
+    }
+
+    public void move()
+    {
+        super.rotate(changeInRotation);
+        super.translate(dx, dy);
     }
 
 }

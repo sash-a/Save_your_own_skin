@@ -4,6 +4,7 @@ import base_classes.GameObject;
 import base_classes.PlaceableObject;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
 import javafx.scene.Parent;
 
@@ -31,13 +32,14 @@ public class Turret extends PlaceableObject
      * @param upgradeCost
      * @param level
      */
-    public Turret(int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire)
+    public Turret(int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire, float bulletSpeed)
     {
         super(id, texture, srcWidth, srcHeight, cost, upgradeCost, level);
         this.lastAttackTime = System.nanoTime();
         this.damage = damage;
         this.damageRadius = damageRadius;
         this.rateOfFire = rateOfFire;
+        this.bulletSpeed = bulletSpeed;
     }
 
     /**
@@ -49,13 +51,14 @@ public class Turret extends PlaceableObject
      * @param upgradeCost
      * @param level
      */
-    public Turret(int id, Sprite sprite, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire)
+    public Turret(int id, Sprite sprite, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire, float bulletSpeed)
     {
         super(id, sprite, cost, upgradeCost, level);
         this.lastAttackTime = System.nanoTime();
         this.damage = damage;
         this.damageRadius = damageRadius;
         this.rateOfFire = rateOfFire;
+        this.bulletSpeed = bulletSpeed;
     }
 
     @Override
@@ -89,7 +92,7 @@ public class Turret extends PlaceableObject
 
         lastAttackTime = time;
         // TODO: unique ID and aim at target
-        Projectile projectile = new Projectile(++id, p, this, bulletSpeed);
+        Projectile projectile = new Projectile(++id, p, this);
 
         // TODO: start firing from correct part of turret
         projectile.setPosition(projectile.getParent().getX() + projectile.getParent().getWidth() / 2,
@@ -112,4 +115,15 @@ public class Turret extends PlaceableObject
     {
         return rateOfFire;
     }
+
+    public float getBulletSpeed()
+    {
+        return bulletSpeed;
+    }
+
+    public Circle getRange()
+    {
+        return new Circle(super.getX() + super.getWidth() / 2,super.getY() + super.getHeight() / 2, damageRadius);
+    }
+
 }
