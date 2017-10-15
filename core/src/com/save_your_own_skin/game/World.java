@@ -15,7 +15,6 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.save_your_own_skin.game_objects.*;
 import utils.EnemyWave;
-import utils.InputProcessor;
 
 import java.util.*;
 
