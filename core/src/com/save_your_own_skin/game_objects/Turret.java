@@ -44,21 +44,17 @@ public class Turret extends PlaceableObject
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
-     *
      * @param id
-     * @param sprite
-     * @param cost
-     * @param upgradeCost
-     * @param level
+     * @param turret
      */
-    public Turret(int id, Sprite sprite, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire, float bulletSpeed)
+    public Turret(int id, Turret turret)
     {
-        super(id, sprite, cost, upgradeCost, level);
+        super(id, turret, turret.getCost(), turret.getUpgradeCost(), turret.getLevel());
         this.lastAttackTime = System.nanoTime();
-        this.damage = damage;
-        this.damageRadius = damageRadius;
-        this.rateOfFire = rateOfFire;
-        this.bulletSpeed = bulletSpeed;
+        this.damage = turret.damage;
+        this.damageRadius = turret.damageRadius;
+        this.rateOfFire = turret.rateOfFire;
+        this.bulletSpeed = turret.bulletSpeed;
     }
 
     @Override
@@ -87,7 +83,7 @@ public class Turret extends PlaceableObject
 
     public Projectile spawnProjectile(Projectile p, GameObject target, float time, int id)
     {
-        if (Math.abs(time - lastAttackTime) < rateOfFire)
+        if (Math.abs(time - lastAttackTime) / 100000000 < rateOfFire)
             return null;
 
         lastAttackTime = time;
@@ -123,7 +119,7 @@ public class Turret extends PlaceableObject
 
     public Circle getRange()
     {
-        return new Circle(super.getX() + super.getWidth() / 2,super.getY() + super.getHeight() / 2, damageRadius);
+        return new Circle(super.getX() + super.getWidth() / 2, super.getY() + super.getHeight() / 2, damageRadius);
     }
 
 }

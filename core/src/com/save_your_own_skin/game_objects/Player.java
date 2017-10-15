@@ -3,18 +3,12 @@ package com.save_your_own_skin.game_objects;
 import base_classes.CharacterObject;
 import base_classes.GameObject;
 import base_classes.PlaceableObject;
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Circle;
-import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game.World;
 import com.save_your_own_skin.interfaces.Upgradable;
-
-import java.util.List;
 
 /**
  * Save_your_own_skin
@@ -83,9 +77,7 @@ public class Player extends CharacterObject implements Upgradable
     public void onCollision(GameObject collidedObject, float delta)
     {
         if (collidedObject instanceof CharacterObject)
-        {
             update(delta);
-        }
     }
 
     @Override
@@ -168,9 +160,12 @@ public class Player extends CharacterObject implements Upgradable
         int xPos = World.toGridPos(super.getX() + angleX);
         int yPos = World.toGridPos(super.getY() + angleY);
 
+        // Can't place on borders and can't place if already turret there
+        if (xPos > 23 || yPos > 23 || xPos < 0 || yPos < 0 || grid[xPos][yPos] != 0) return false;
+
         obj.setPosition(World.toAbsolutePos(xPos) + World.TILE_SIZE / 4, World.toAbsolutePos(yPos) + World.TILE_SIZE / 4);
+
         grid[xPos][yPos] = 2;
-        // TODO: snap to grid and return false if something is already there
         return true;
     }
 

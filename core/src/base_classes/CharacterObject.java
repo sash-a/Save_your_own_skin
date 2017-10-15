@@ -72,6 +72,7 @@ public abstract class CharacterObject extends GameObject
     public void reduceHealth(int damagedAmount)
     {
         health -= damagedAmount;
+        System.out.println(health);
 
         if (health <= 0)
             destroy();
@@ -108,5 +109,10 @@ public abstract class CharacterObject extends GameObject
     public void setSpeed(float speed)
     {
         this.speed = speed;
+    }
+
+    public float getDamage()
+    {
+        return damage;
     }
 }

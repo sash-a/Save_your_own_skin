@@ -30,6 +30,7 @@ public class Enemy extends CharacterObject
      * @param maxHealth
      * @param speed
      */
+    //TODO damage rad and rof not needed damage on collision
     public Enemy(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
         super(id, texture, srcWidth, srcHeight, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
@@ -56,8 +57,14 @@ public class Enemy extends CharacterObject
     @Override
     public void onCollision(GameObject collidedObject, float delta)
     {
-        super.destroy();
-        System.out.println("hit: " + collidedObject.getID());
+        if (collidedObject instanceof Player)
+        {
+            super.destroy();
+            super.attack((int) super.getDamage(), (Player) collidedObject);
+            return;
+        }
+        if (collidedObject instanceof CharacterObject)
+            this.move();
     }
 
     @Override
@@ -66,14 +73,19 @@ public class Enemy extends CharacterObject
 
     }
 
-    // TODO: find a way to call this in update
-    public void moveToPlayer(Player player, float delta)
+    public void move()
+    {
+        super.setRotation(changeInRotation);
+        super.translate(dx, dy);
+    }
+
+    public void pointToPlayer(Player player, float delta)
     {
         // Point towards player
         // Rotation
         Vector2 dir = new Vector2(player.getX() - super.getX(), player.getY() - super.getY());
         dir.rotate90(-1);
-        super.setRotation(dir.angle());
+        changeInRotation = dir.angle();
 
         // Move
         float angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
@@ -84,7 +96,7 @@ public class Enemy extends CharacterObject
         if (angleX == 0)
             angleX += Math.PI;
 
-        super.translate(-angleX * super.getSpeed() * delta, angleY * super.getSpeed() * delta);
+        dx = -angleX * super.getSpeed() * delta;
+        dy = angleY * super.getSpeed() * delta;
     }
-
 }

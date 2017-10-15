@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.save_your_own_skin.game.World;
 import com.save_your_own_skin.game_objects.Tile;
 
 import java.util.Collection;
@@ -18,10 +19,6 @@ import java.util.Collection;
  */
 public abstract class GameObject extends Sprite
 {
-    /*
-    TODO: move id to front of constructor
-    TODO: consider moving damage, damage rad and rofto character obj
-    */
     private int id;
     private Pixmap pmap; // Not sure if using
     private boolean isVisible;
@@ -87,7 +84,6 @@ public abstract class GameObject extends Sprite
         return isVisible;
     }
 
-    // TODO: Anything else?
     public void destroy()
     {
         this.isVisible = false;
@@ -99,12 +95,18 @@ public abstract class GameObject extends Sprite
         return new Vector2(super.getX(), super.getY());
     }
 
+    public Vector2 getGridPos()
+    {
+        return new Vector2(World.toGridPos(super.getX()),
+                World.toGridPos(super.getY()));
+    }
+
     /**
      * Checks if the current entity is colliding with any other nearby entity (Tiles are also entities)
      *
      * @param newX The x value that the entity wants to move to
      * @param newY The y value that the entity wants to move to
-     * @return True if the entity would collide at newX, newY
+     * @return A game object if one is in that position otherwise null
      */
     // TODO: Add in pixel collision test or polygon instead of rectangle
     public GameObject isColliding(Collection<GameObject> gameObjects, float newX, float newY, float newRotation)

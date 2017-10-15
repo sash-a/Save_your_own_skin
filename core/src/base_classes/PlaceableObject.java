@@ -62,6 +62,11 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
         return upgradeCost;
     }
 
+    public int getLevel()
+    {
+        return level;
+    }
+
     @Override
     public void onUpgrade()
     {

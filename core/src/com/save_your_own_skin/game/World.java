@@ -5,47 +5,72 @@ import base_classes.PlaceableObject;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game_objects.*;
+import utils.EnemyWave;
+import utils.InputProcessor;
 
 import java.util.*;
 
 public class World extends ApplicationAdapter
 {
     // TODO: implement global speed mod
-    public static final int WORLD_WIDTH = 750;
+    public static final int WORLD_WIDTH = 850;
     public static final int WORLD_HEIGHT = 750;
     public static final int TILE_SIZE = 30;
     public static final int MAP_HEIGHT = 25;
     public static final int MAP_WIDTH = 25;
 
 
-    SpriteBatch batch;
+    private SpriteBatch batch;
 
-    Texture playerTexture;
-    Player player;
+    private Player player;
+    private GameObject currentSelectedObject;
 
-    Texture enemyTexture;
-    Enemy enemy;
+    // Textures
+    private Texture playerTexture;
+    private Texture enemyTexture;
+    private Texture machineGunTexture;
+    private Texture rocketLauncherTexture;
+    private Texture slowDownTexture;
 
     // TODO: better solution for this
-    Map<Vector2, GameObject> gameObjectPositions; // All game objects
-    List<Projectile> projectiles; // All projectiles current projectiles
-    List<Enemy> enemies; // All alive enemies
-    List<PlaceableObject> placeables; // All placeables
-    List<Tile> tiles;
+    private List<GameObject> gameObjects; // All game objects
+
+    private List<Projectile> projectiles; // All projectiles current projectiles
+    private List<GameObject> enemies; // All alive enemies
+    private List<Tile> tiles;
+    private List<EnemyWave> enemyWaves;
 
 
-    public int[][] grid;
+    private int[][] grid;
 
     private int id;
+
+    private int currentTurretIndex; // Position in list of current turret
+    private List<Turret> defaultTurrets;
+    private Turret machineGunTurret;
+    private Turret rocketLauncherTurret;
+    private Turret slowDownTurret;
+
+    private BitmapFont bitmapFont;
+    public static int score;
+    private int money;
+
     // for debug
-    ShapeRenderer sr;
+    private ShapeRenderer sr;
+
+    private enum types
+    {
+        small, medium, large
+    }
 
     @Override
     public void create()
@@ -54,46 +79,69 @@ public class World extends ApplicationAdapter
         batch = new SpriteBatch();
         grid = new int[MAP_WIDTH][MAP_HEIGHT];
 
-        gameObjectPositions = new HashMap<Vector2, GameObject>();
+    /*________________________________________________________________________________________________________________*/
+
+        // init lists
+        gameObjects = new ArrayList<GameObject>();
         projectiles = new ArrayList<Projectile>();
-        enemies = new ArrayList<Enemy>();
+        enemies = new ArrayList<GameObject>();
+        enemyWaves = new ArrayList<EnemyWave>();
+        defaultTurrets = new ArrayList<Turret>();
 
 
-        playerTexture = new Texture("player.png");
-        player = new Player(++id, playerTexture, 30, 30, 50, 60, 1000000, 1, 100, 100, 200);
+    /*________________________________________________________________________________________________________________*/
+
+        // init textures
+        playerTexture = new Texture("player/player.png");
+        enemyTexture = new Texture("enemies/enemy.png");
+        machineGunTexture = new Texture("turrets/machine_gun_t.png");
+        rocketLauncherTexture = new Texture("turrets/rocket_launcher_t.png");
+        slowDownTexture = new Texture("turrets/slow_down_t.png");
+
+    /*________________________________________________________________________________________________________________*/
+
+        // create player
+        player = new Player(++id, playerTexture, 20, 36, 50, 60, 1, 1, 100, 100, 200);
         player.setX(50);
         player.setY(50);
+        gameObjects.add(player);
 
-        enemyTexture = new Texture("enemy.png");
-        enemy = new Enemy(++id, enemyTexture, 30, 30, 50, 30, 60, 1, 100, 100, 200);
-        enemy.setPosition(400, 400);
+    /*________________________________________________________________________________________________________________*/
+        // TODO: time delay before first wave and between waves
+        // create the first wave enemies
+        startWave();
 
+    /*________________________________________________________________________________________________________________*/
 
+        // Create the default turrets and add to the list
+        machineGunTurret = new Turret(-1, machineGunTexture, 25, 25, 15, 10, 1, 25, TILE_SIZE * 3, 0.5f, 650);
+        rocketLauncherTurret = new Turret(-1, rocketLauncherTexture, 25, 25, 30, 20, 1, 60, TILE_SIZE * 4, 1, 400);
+        slowDownTurret = new Turret(-1, slowDownTexture, 25, 25, 20, 10, 1, 1.5f, TILE_SIZE * 3, 0.75f, 500);
+
+        defaultTurrets.add(machineGunTurret);
+        defaultTurrets.add(rocketLauncherTurret);
+        defaultTurrets.add(slowDownTurret);
+
+    /*________________________________________________________________________________________________________________*/
+
+        // Creating map
         tiles = createMap();
+        gameObjects.addAll(tiles);
 
-        // TODO: put method?
-        gameObjectPositions.put(player.getVector2(), player);
-        gameObjectPositions.put(enemy.getVector2(), enemy);
-        for (Tile tile : tiles)
-        {
-            gameObjectPositions.put(tile.getVector2(), tile);
-        }
+        // Player info stuff
+        bitmapFont = new BitmapFont();
+        score = 0;
+        money = 20;
 
-
-        //borderTextures.add(new Texture())
         // Debug
+        // TODO create a circle around turret to show range
         sr = new ShapeRenderer();
     }
 
     private List<Tile> createMap()
     {
-        List<Texture> borderTextures = new ArrayList<Texture>();
-        borderTextures.add(new Texture("orange_brick.png"));
-        borderTextures.add(new Texture("brown_brick.png"));
-
-        List<Texture> floorTextures = new ArrayList<Texture>();
-        floorTextures.add(new Texture("green_brick.png"));
-        floorTextures.add(new Texture("grey_brick.png"));
+        Texture border = new Texture("tiles/brown_brick.png");
+        Texture floor = new Texture("tiles/large_white_brick.png");
 
         List<Tile> tiles = new ArrayList<Tile>();
         for (int i = 0; i < MAP_WIDTH; i++)
@@ -103,8 +151,7 @@ public class World extends ApplicationAdapter
                 if ((i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1)
                         && !(i == MAP_WIDTH / 2 && j == MAP_HEIGHT - 1))
                 {
-                    Texture t = borderTextures.get((int) (Math.random() * 2));
-                    Tile b = new Tile(++id, t, TILE_SIZE, TILE_SIZE, true);
+                    Tile b = new Tile(++id, border, TILE_SIZE, TILE_SIZE, true);
                     b.setPosition(i * TILE_SIZE, j * TILE_SIZE);
                     tiles.add(b);
 
@@ -113,8 +160,7 @@ public class World extends ApplicationAdapter
                 else
                 {
                     grid[i][j] = 0;
-                    Texture t = floorTextures.get((int) (Math.random()));
-                    Tile b = new Tile(++id, t, TILE_SIZE, TILE_SIZE, false);
+                    Tile b = new Tile(++id, floor, TILE_SIZE, TILE_SIZE, false);
                     b.setPosition(i * TILE_SIZE, j * TILE_SIZE);
                     tiles.add(b);
                 }
@@ -124,17 +170,19 @@ public class World extends ApplicationAdapter
         return tiles;
     }
 
-    /**
-     * This is how complexity is reduced from O(n^2)
-     * Search through all 'close' tiles and get any entities in that position from a hashmap. When doing collision check
-     * only search through these few entities
-     *
-     * @param entity Entity for which to find the neighbours of
-     * @return List<Entity>
-     */
-    public List<GameObject> findNeighbours(GameObject entity)
+    private void startWave()
     {
-        return null;
+        List<Enemy> enemies = new ArrayList<Enemy>();
+        for (int i = 0; i < 10; i++)
+        {
+            Enemy e = new Enemy(++id, enemyTexture, 15, 15, 20, 1, 1, 1, 100, 100, 200);
+            float x = MAP_WIDTH / 2 * TILE_SIZE;
+            float y = MAP_HEIGHT * TILE_SIZE - 3 * TILE_SIZE;
+            e.setPosition(x, y);
+
+            enemies.add(e);
+        }
+        enemyWaves.add(new EnemyWave(enemies, 5));
     }
 
     public static int toGridPos(float pos)
@@ -147,108 +195,258 @@ public class World extends ApplicationAdapter
         return pos * TILE_SIZE;
     }
 
+
+    private List<GameObject> filterPlayerCollisionList()
+    {
+        List<GameObject> playerCollidableObjects = new ArrayList<GameObject>();
+        playerCollidableObjects.addAll(gameObjects);
+        Iterator itr = playerCollidableObjects.iterator();
+
+        while (itr.hasNext())
+        {
+            GameObject go = (GameObject) itr.next();
+            if (go instanceof Enemy)
+                itr.remove();
+        }
+        return playerCollidableObjects;
+    }
+
+    private void placeTurret()
+    {
+        PlaceableObject toPlace = new Turret(++id, defaultTurrets.get(currentTurretIndex));
+
+        if (player.place(toPlace, grid)) gameObjects.add(toPlace);
+    }
+
+
+    // TODO find out if scroll up or down
+    private void changeCurrentTurretToPlace(int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            currentTurretIndex++;
+
+            if (currentTurretIndex == 3) currentTurretIndex = 0;
+            else if (currentTurretIndex == -1) currentTurretIndex = 2;
+        }
+    }
+
+
+    private void onScrollWheel()
+    {
+        Gdx.input.setInputProcessor(new InputAdapter()
+        {
+            @Override
+            public boolean scrolled(int amount)
+            {
+                System.out.println("hey");
+                changeCurrentTurretToPlace(1);
+                return true;
+            }
+        });
+    }
+
+
+    /**
+     * Finds the current turret the player is looking at and highlights it.
+     * If there isn't one on that square highlight the square instead.
+     */
+    private void findCurrentTurret()
+    {
+        // If pointing outside of world
+        if (currentSelectedObject != null)
+            currentSelectedObject.setAlpha(1f);
+        currentSelectedObject = null;
+
+        // Find direction to pointing in
+        float roundedDirection = 90 * (float) Math.round(player.getRotation() / 90);
+
+        // Normalize direction (0 >= dir >= 360)
+        while (roundedDirection > 360)
+            roundedDirection -= 360;
+
+        while (roundedDirection < 0)
+            roundedDirection += 360;
+
+        float angleY = (float) (Math.cos(Math.toRadians(player.getRotation())));
+        float angleX = -(float) (Math.sin(Math.toRadians(player.getRotation())));
+
+        if (roundedDirection == 0 || roundedDirection == 360)
+            angleY += 2 * World.TILE_SIZE;
+        else if (roundedDirection == 90)
+            angleX -= 2 * World.TILE_SIZE;
+        else if (roundedDirection == 180)
+            angleY -= 2 * World.TILE_SIZE;
+        else
+            angleX += 2 * World.TILE_SIZE;
+
+        int x = World.toGridPos(player.getX() + angleX);
+        int y = World.toGridPos(player.getY() + angleY);
+
+        for (GameObject gameObject : gameObjects)
+        {
+            if (!(gameObject instanceof Turret || gameObject instanceof Tile))
+                continue;
+
+            if (gameObject.getGridPos().x == x && gameObject.getGridPos().y == y)
+            {
+                if (currentSelectedObject != null)
+                    currentSelectedObject.setAlpha(1);
+
+                currentSelectedObject = gameObject;
+                gameObject.setAlpha(0.5f);
+
+                if (currentSelectedObject instanceof Turret) break; // if turret found can stop searching
+            }
+        }
+    }
+
+    /**
+     * Player manipulations go here
+     */
+    private void updatePlayer(float delta)
+    {
+        findCurrentTurret();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.B)) placeTurret();
+
+        player.update(delta);
+        // Player movement and collision
+        GameObject collided = player.isColliding(
+                filterPlayerCollisionList(),
+                player.getX() + player.getDx(),
+                player.getY() + player.getDy(),
+                player.getRotation() + player.getChangeInRotation());
+
+        if (collided == null)
+        {
+            player.move();
+            return;
+        }
+        player.onCollision(collided, delta);
+    }
+
+    // This is useful if go back to hashmap
+    /*private void moveEnemy(Enemy enemy, float delta)
+    {
+        enemy.pointToPlayer(player, delta);
+        for (Vector2 vector2 : gameObjectsOnScreen.keySet())
+        {
+            if (gameObjectsOnScreen.get(vector2) != null &&
+                    gameObjectsOnScreen.get(vector2).equals(enemy))
+            {
+                vector2.set(enemy.getDx(), enemy.getDy());
+                break;
+            }
+        }
+        enemy.move();
+    }
+    */
+
+    private void updateEnemy(Enemy enemy, float delta, Iterator itr)
+    {
+        GameObject collided = enemy.isColliding(gameObjects,
+                enemy.getX() + enemy.getDx(),
+                enemy.getY() + enemy.getDy(),
+                enemy.getRotation() + enemy.getChangeInRotation());
+
+
+        if (collided == null)
+        {
+            enemy.pointToPlayer(player, delta);
+            enemy.move();
+            return;
+        }
+
+        enemy.onCollision(collided, delta);
+
+        if (collided instanceof Player)
+        {
+            itr.remove();
+            enemies.remove(enemy);
+            enemy.onCollision(player, delta);
+        }
+    }
+
     @Override
     public void render()
     {
         float delta = Gdx.graphics.getDeltaTime();
+        onScrollWheel();
+        System.out.println(currentTurretIndex);
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        batch.begin();
 
-        // Player movement and collision
-        player.update(delta);
+        updatePlayer(delta);
 
-        GameObject collided = player.isColliding(gameObjectPositions.values(),
-                player.getX() + player.getDx(),
-                player.getY() + player.getDy(),
-                player.getRotation() + player.getChangeInRotation());
-        if (collided != null)
+        // Spawning waves
+        if (!enemyWaves.get(0).isWaveFinished())
         {
-            collided.onCollision(player, delta);
-            player.onCollision(collided, delta);
-            if (collided instanceof Enemy)
-                gameObjectPositions.values().remove(collided);
+            Enemy enem = enemyWaves.get(0).spawnEnemy();
+            if (enem != null)
+            {
+                gameObjects.add(enem);
+                enemies.add(enem);
+            }
         }
         else
         {
-            player.move();
+            enemyWaves.remove(0);
+            startWave();
         }
 
-        PlaceableObject toPlace;
-        if (Gdx.input.isKeyPressed(Input.Keys.B))
-        {
-            toPlace = new Turret(++id,
-                    playerTexture,
-                    15,
-                    15,
-                    10,
-                    5,
-                    1,
-                    2,
-                    TILE_SIZE * 3,
-                    100000000,
-                    200);
-            player.place(toPlace, grid);
-            gameObjectPositions.put(new Vector2(toPlace.getX(), toPlace.getY()), toPlace);
-        }
+    /*________________________________________________________________________________________________________________*/
 
-        /*____________________________________________________________________________________________________________*/
+        // Render stuff
+        batch.begin();
+
 
         // Draw tiles first
         for (Tile tile : tiles)
         {
-            batch.draw(tile,
-                    tile.getX(),
-                    tile.getY(),
-                    tile.getOriginX(),
-                    tile.getOriginY(),
-                    tile.getWidth(),
-                    tile.getHeight(),
-                    tile.getScaleX(),
-                    tile.getScaleY(),
-                    tile.getRotation());
+            tile.draw(batch);
         }
 
-        for (GameObject gameObject : gameObjectPositions.values())
+        Iterator itr = gameObjects.iterator();
+        while (itr.hasNext())
         {
-            if (!gameObject.isVisible()) continue;
+            GameObject gameObject = (GameObject) itr.next();
 
+            if (!gameObject.isVisible())
+            {
+                itr.remove();
+                continue;
+            }
             if (gameObject instanceof Tile) continue;
 
-            // Draw game objects if not dead
-            batch.draw(gameObject,
-                    gameObject.getX(),
-                    gameObject.getY(),
-                    gameObject.getOriginX(),
-                    gameObject.getOriginY(),
-                    gameObject.getWidth(),
-                    gameObject.getHeight(),
-                    gameObject.getScaleX(),
-                    gameObject.getScaleY(),
-                    gameObject.getRotation());
+            // Draw game objects if visible
+            gameObject.draw(batch);
 
-            // Player updates and input handling done above
-            if ((gameObject instanceof Player)) continue;
+            // Call update method for objects
             gameObject.update(delta);
 
-            if (gameObject instanceof Enemy)
-                ((Enemy) gameObject).moveToPlayer(player, delta);
+            // Player updated above
+            if ((gameObject instanceof Player)) continue;
 
-            // TODO: enemy that it points towards should be closest enemy to player
-            if (gameObject instanceof Turret)
+            if (gameObject instanceof Enemy) updateEnemy((Enemy) gameObject, delta, itr);
+
+            else if (gameObject instanceof Turret) // TODO: enemy that it points towards should be closest enemy to player
             {
                 Turret turret = (Turret) gameObject;
 
                 // Shoot
-                Projectile p = new Projectile(++id, enemyTexture, 5, 5, turret);
+                // TODO make default projectiles public
+                Projectile p = new Projectile(++id, enemyTexture, 10, 10, turret);
 
-                // TODO: find a way to update make a unique vector for the projectile hashmap, id?
-                for (Enemy e : enemies)
+                // TODO: find a way to updatePlayer make a unique vector for the projectile hashmap, id?
+                // TODO: only loop through neighbours
+                for (GameObject enemy : enemies)
                 {
-                    if (!Intersector.overlaps(turret.getRange(), e.getBoundingRectangle()))
+                    Circle c = turret.getRange();
+
+                    if (!Intersector.overlaps(c, enemy.getBoundingRectangle()))
                         continue;
-                    turret.pointTowardsEnemy(enemy); // TODO: make this closest enemy
+                    turret.pointTowardsEnemy((Enemy) enemies.get(0)); // TODO: make this closest enemy
 
                     Projectile spawned = turret.spawnProjectile(p, null, System.nanoTime(), ++id);
                     if (spawned == null)
@@ -256,28 +454,27 @@ public class World extends ApplicationAdapter
 
                     projectiles.add(spawned);
                 }
-
             }
         }
 
         // Separate loop for projectiles
-        Iterator itr = projectiles.iterator();
+        itr = projectiles.iterator();
         while (itr.hasNext())
         {
             Projectile projectile = (Projectile) itr.next();
 
+            GameObject gameObject = projectile.isColliding(enemies,
+                    projectile.getX(), projectile.getY(), projectile.getRotation());
+
+            if (gameObject != null)
+            {
+                projectile.onCollision(gameObject, delta);
+                if (!gameObject.isVisible()) enemies.remove(gameObject); // main loop removes from other list
+            }
+
             if (projectile.isVisible())
             {
-                batch.draw(projectile,
-                        projectile.getX(),
-                        projectile.getY(),
-                        projectile.getOriginX(),
-                        projectile.getOriginY(),
-                        projectile.getWidth(),
-                        projectile.getHeight(),
-                        projectile.getScaleX(),
-                        projectile.getScaleY(),
-                        projectile.getRotation());
+                projectile.draw(batch);
                 projectile.update(delta);
             }
             else
@@ -285,6 +482,10 @@ public class World extends ApplicationAdapter
                 itr.remove();
             }
         }
+
+        // Fonts
+        bitmapFont.draw(batch, "Score: " + score, 760, 700, 80, 1, true);
+        bitmapFont.draw(batch, "Money: " + money, 760, 680, 80, 1, true);
 
         batch.end();
 
