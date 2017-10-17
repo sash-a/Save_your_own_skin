@@ -15,18 +15,20 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.save_your_own_skin.game_objects.*;
 import utils.EnemyWave;
+import utils.*;
 
 import java.util.*;
 
 public class World extends ApplicationAdapter
 {
     // TODO: implement global speed mod
-    public static final int WORLD_WIDTH = 850;
+    public static final int WORLD_WIDTH = 900;
     public static final int WORLD_HEIGHT = 750;
     public static final int TILE_SIZE = 30;
     public static final int MAP_HEIGHT = 25;
     public static final int MAP_WIDTH = 25;
 
+    public static ScoreManager scoreManager;
 
     private SpriteBatch batch;
 
@@ -60,8 +62,6 @@ public class World extends ApplicationAdapter
     private Turret slowDownTurret;
 
     private BitmapFont bitmapFont;
-    public static int score;
-    private int money;
 
     // for debug
     private ShapeRenderer sr;
@@ -129,8 +129,7 @@ public class World extends ApplicationAdapter
 
         // Player info stuff
         bitmapFont = new BitmapFont();
-        score = 0;
-        money = 20;
+        scoreManager = new ScoreManager(0, 20);
 
         // Debug
         // TODO create a circle around turret to show range
@@ -212,6 +211,10 @@ public class World extends ApplicationAdapter
 
     private void placeTurret()
     {
+        // Only place if have enough money
+        if (scoreManager.getMoney() < defaultTurrets.get(currentTurretIndex).getCost())
+            return;
+
         PlaceableObject toPlace = new Turret(++id, defaultTurrets.get(currentTurretIndex));
 
         if (player.place(toPlace, grid)) gameObjects.add(toPlace);
@@ -482,11 +485,33 @@ public class World extends ApplicationAdapter
             }
         }
 
-        // Fonts
-        bitmapFont.draw(batch, "Score: " + score, 760, 700, 80, 1, true);
-        bitmapFont.draw(batch, "Money: " + money, 760, 680, 80, 1, true);
+        // Sidebar
+        bitmapFont.draw(batch, "Score: " + scoreManager.getScore(), 760, 700, 120, 1, true);
+        bitmapFont.draw(batch, "Money: " + scoreManager.getMoney(), 760, 680, 120, 1, true);
+
+        // TODO make this turret the selected turret if the player is selecting one
+
+        Turret currentTurret = defaultTurrets.get(currentTurretIndex);
+        String title = "Turret to place";
+        if (currentSelectedObject instanceof Turret)
+        {
+            currentTurret = (Turret)currentSelectedObject;
+            title = "Selected turret";
+        }
+
+        bitmapFont.draw(batch, title, 760, 600, 120, 1, true);
+        batch.draw(currentTurret.getTexture(), 760, 450, 120, 120);
+        bitmapFont.draw(batch,
+                "STATS" +
+                    "\nDamage: " + currentTurret.getDamage() +
+                    "\nRange: " + currentTurret.getDamageRadius() +
+                    "\nRate of fire: " + 1/currentTurret.getRateOfFire() +
+                    "\nUpgrade cost: " + currentTurret.getUpgradeCost(),
+                760, 430, 120, 1, true);
+
 
         batch.end();
+
 
         // Debug
         Rectangle r = player.getBoundingRectangle();

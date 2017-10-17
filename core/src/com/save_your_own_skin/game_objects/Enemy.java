@@ -5,8 +5,11 @@ import base_classes.GameObject;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
+import com.save_your_own_skin.game.World;
 
 import java.util.List;
+
+import static com.save_your_own_skin.game.World.*;
 
 /**
  * Save_your_own_skin
@@ -98,5 +101,13 @@ public class Enemy extends CharacterObject
 
         dx = -angleX * super.getSpeed() * delta;
         dy = angleY * super.getSpeed() * delta;
+    }
+
+    @Override
+    public void destroy()
+    {
+        super.destroy();
+        // TODO implement modifiers
+        World.scoreManager.onKill(1,1);
     }
 }
