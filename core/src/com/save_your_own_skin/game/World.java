@@ -492,11 +492,11 @@ public class World extends ApplicationAdapter
         // TODO make this turret the selected turret if the player is selecting one
 
         Turret currentTurret = defaultTurrets.get(currentTurretIndex);
-        String title = "Turret to place";
+        String title = "Turret that will be placed";
         if (currentSelectedObject instanceof Turret)
         {
             currentTurret = (Turret)currentSelectedObject;
-            title = "Selected turret";
+            title = "Current selected turret";
         }
 
         bitmapFont.draw(batch, title, 760, 600, 120, 1, true);
