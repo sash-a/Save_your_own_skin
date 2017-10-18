@@ -437,11 +437,9 @@ public class World extends ApplicationAdapter
                 Turret turret = (Turret) gameObject;
 
                 // Shoot
-                // TODO make default projectiles public
+                // TODO make default projectiles global
                 Projectile p = new Projectile(++id, enemyTexture, 10, 10, turret);
 
-                // TODO: find a way to updatePlayer make a unique vector for the projectile hashmap, id?
-                // TODO: only loop through neighbours
                 for (GameObject enemy : enemies)
                 {
                     Circle c = turret.getRange();
@@ -488,8 +486,6 @@ public class World extends ApplicationAdapter
         // Sidebar
         bitmapFont.draw(batch, "Score: " + scoreManager.getScore(), 760, 700, 120, 1, true);
         bitmapFont.draw(batch, "Money: " + scoreManager.getMoney(), 760, 680, 120, 1, true);
-
-        // TODO make this turret the selected turret if the player is selecting one
 
         Turret currentTurret = defaultTurrets.get(currentTurretIndex);
         String title = "Turret that will be placed";

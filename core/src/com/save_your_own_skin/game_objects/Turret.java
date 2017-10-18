@@ -17,6 +17,8 @@ import java.util.List;
  */
 public class Turret extends PlaceableObject
 {
+
+    // TODO add slow down variables for that turret
     private float lastAttackTime;
     private float bulletSpeed;
     private float damage, damageRadius, rateOfFire;
@@ -87,10 +89,8 @@ public class Turret extends PlaceableObject
             return null;
 
         lastAttackTime = time;
-        // TODO: unique ID and aim at target
         Projectile projectile = new Projectile(++id, p, this);
 
-        // TODO: start firing from correct part of turret
         projectile.setPosition(projectile.getParent().getX() + projectile.getParent().getWidth() / 2,
                 projectile.getParent().getY() + projectile.getParent().getHeight() / 2);
 

@@ -108,7 +108,6 @@ public abstract class GameObject extends Sprite
      * @param newY The y value that the entity wants to move to
      * @return A game object if one is in that position otherwise null
      */
-    // TODO: Add in pixel collision test or polygon instead of rectangle
     public GameObject isColliding(Collection<GameObject> gameObjects, float newX, float newY, float newRotation)
     {
         for (GameObject otherObject : gameObjects) // Looping through all (ideally) neighbouring entities.
