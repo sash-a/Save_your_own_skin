@@ -72,4 +72,13 @@ public abstract class PlaceableObject extends GameObject implements Upgradable
     {
     }
 
+    public void incrementLevel()
+    {
+        level++;
+
+        Level l = new Level(level, this);
+        l.incrementLevel();
+        l.onLevelChange();
+    }
+
 }

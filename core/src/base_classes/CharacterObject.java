@@ -12,8 +12,8 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
  */
 public abstract class CharacterObject extends GameObject
 {
-    private float damage, damageRadius, rateOfFire;
-    private int level;
+    private float damage;
+    private int level; // TODO should be in game obj?
     private int health, maxHealth;
     private float speed;
     protected float dx, dy, changeInRotation; // change in distance
@@ -26,12 +26,10 @@ public abstract class CharacterObject extends GameObject
      * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      */
-    public CharacterObject(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    public CharacterObject(int id, Texture texture, int srcWidth, int srcHeight, float damage, int level, int health, int maxHealth, float speed)
     {
         super(id, texture, srcWidth, srcHeight);
         this.damage = damage;
-        this.damageRadius = damageRadius;
-        this.rateOfFire = rateOfFire;
         this.level = level;
         this.health = health;
         this.maxHealth = maxHealth;
@@ -44,35 +42,19 @@ public abstract class CharacterObject extends GameObject
      * @param id
      * @param sprite
      */
-    public CharacterObject(int id, Sprite sprite, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    public CharacterObject(int id, Sprite sprite, float damage, int level, int health, int maxHealth, float speed)
     {
         super(id, sprite);
         this.damage = damage;
-        this.damageRadius = damageRadius;
-        this.rateOfFire = rateOfFire;
         this.level = level;
         this.health = health;
         this.maxHealth = maxHealth;
         this.speed = speed;
     }
 
-    /**
-     * Creates a sprite with width, height, and texture region equal to the specified size. The texture region's upper left corner
-     * will be 0,0.
-     *
-     * @param texture
-     * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
-     * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
-     * @param damage
-     * @param damageRadius
-     * @param level
-     */
-
-
     public void reduceHealth(int damagedAmount)
     {
         health -= damagedAmount;
-        System.out.println(health);
 
         if (health <= 0)
             destroy();
@@ -114,5 +96,30 @@ public abstract class CharacterObject extends GameObject
     public float getDamage()
     {
         return damage;
+    }
+
+    public void setDamage(float damage)
+    {
+        this.damage = damage;
+    }
+
+    public void setMaxHealth(int maxHealth)
+    {
+        this.maxHealth = maxHealth;
+    }
+
+    public int getMaxHealth()
+    {
+        return maxHealth;
+    }
+
+    public int getLevel()
+    {
+        return level;
+    }
+
+    public void setLevel(int level)
+    {
+        this.level = level;
     }
 }

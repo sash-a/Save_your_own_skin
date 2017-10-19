@@ -55,11 +55,9 @@ public class Projectile extends GameObject implements Intractable
         {
             super.attack((int) parent.getDamage(), (Enemy) collidedObject);
             super.destroy();
-            System.out.println("hit enemy");
             return;
         }
-
-
+        // Move through everything that is not an enemy.
         super.translate(-(float) (Math.sin(Math.toRadians(super.getRotation()))),
                 (float) (Math.cos(Math.toRadians(super.getRotation()))));
     }

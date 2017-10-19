@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game.World;
+import utils.Level;
 
 import java.util.List;
 
@@ -36,7 +37,8 @@ public class Enemy extends CharacterObject
     //TODO damage rad and rof not needed damage on collision
     public Enemy(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
-        super(id, texture, srcWidth, srcHeight, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
+        super(id, texture, srcWidth, srcHeight, damage, level, health, maxHealth, speed);
+        upgradeToLevel();
     }
 
     /**
@@ -45,16 +47,25 @@ public class Enemy extends CharacterObject
      * @param id
      * @param sprite
      * @param damage
-     * @param damageRadius
-     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    public Enemy(int id, Sprite sprite, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    public Enemy(int id, Sprite sprite, float damage, int level, int health, int maxHealth, float speed)
     {
-        super(id, sprite, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
+        super(id, sprite, damage, level, health, maxHealth, speed);
+        upgradeToLevel();
+    }
+
+    private void upgradeToLevel()
+    {
+        for (int i = 0; i < super.getLevel(); i++)
+        {
+            Level l = new Level(i, this);
+            l.incrementLevel();
+            l.onLevelChange();
+        }
     }
 
     @Override

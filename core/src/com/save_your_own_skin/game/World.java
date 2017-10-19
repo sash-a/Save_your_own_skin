@@ -100,7 +100,7 @@ public class World extends ApplicationAdapter
     /*________________________________________________________________________________________________________________*/
 
         // create player
-        player = new Player(++id, playerTexture, 20, 36, 50, 60, 1, 1, 100, 100, 200);
+        player = new Player(++id, playerTexture, 20, 60, 1, 1, 100, 100, 200);
         player.setX(50);
         player.setY(50);
         gameObjects.add(player);
@@ -131,9 +131,12 @@ public class World extends ApplicationAdapter
         bitmapFont = new BitmapFont();
         scoreManager = new ScoreManager(0, 20);
 
-        // Debug
-        // TODO create a circle around turret to show range
         sr = new ShapeRenderer();
+        sr.setColor(Color.NAVY);
+
+        // Hiding the mouse
+        Gdx.input.setCursorCatched(true);
+        Gdx.input.setCursorPosition(MAP_WIDTH * TILE_SIZE / 2, MAP_HEIGHT * TILE_SIZE / 2);
     }
 
     private List<Tile> createMap()
@@ -241,7 +244,6 @@ public class World extends ApplicationAdapter
             @Override
             public boolean scrolled(int amount)
             {
-                System.out.println("hey");
                 changeCurrentTurretToPlace(1);
                 return true;
             }
@@ -374,7 +376,6 @@ public class World extends ApplicationAdapter
     {
         float delta = Gdx.graphics.getDeltaTime();
         onScrollWheel();
-        System.out.println(currentTurretIndex);
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -432,7 +433,7 @@ public class World extends ApplicationAdapter
 
             if (gameObject instanceof Enemy) updateEnemy((Enemy) gameObject, delta, itr);
 
-            else if (gameObject instanceof Turret) // TODO: enemy that it points towards should be closest enemy to player
+            else if (gameObject instanceof Turret)
             {
                 Turret turret = (Turret) gameObject;
 
@@ -510,11 +511,15 @@ public class World extends ApplicationAdapter
 
 
         // Debug
-        Rectangle r = player.getBoundingRectangle();
+
+
 
         sr.begin(ShapeRenderer.ShapeType.Line);
-        sr.setColor(new Color(1, 1, 1, 0));
-        sr.rect(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+        if (currentSelectedObject instanceof Turret)
+        {
+            Circle c = ((Turret) currentSelectedObject).getRange();
+            sr.circle(c.x, c.y, c.radius);
+        }
         sr.end();
     }
 

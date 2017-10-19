@@ -7,8 +7,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game.World;
 import com.save_your_own_skin.interfaces.Upgradable;
+import utils.Level;
 
 /**
  * Save_your_own_skin
@@ -17,24 +19,25 @@ import com.save_your_own_skin.interfaces.Upgradable;
  */
 public class Player extends CharacterObject implements Upgradable
 {
+    private int upgradeCost;
+
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size.
      *
      * @param id
      * @param texture
-     * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
-     * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
+     * @param srcWidth  The width of the texture region. May be negative to flip the sprite when drawn.
+     * @param srcHeight The height of the texture region. May be negative to flip the sprite when drawn.
      * @param damage
-     * @param damageRadius
-     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    public Player(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    public Player(int id, Texture texture, int srcWidth, int srcHeight, float damage, int level, int health, int maxHealth, float speed)
     {
-        super(id, texture, srcWidth, srcHeight, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
+        super(id, texture, srcWidth, srcHeight, damage, level, health, maxHealth, speed);
+        upgradeCost = 30;
     }
 
     /**
@@ -52,25 +55,34 @@ public class Player extends CharacterObject implements Upgradable
      */
     public Player(int id, Sprite sprite, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
     {
-        super(id, sprite, damage, damageRadius, rateOfFire, level, health, maxHealth, speed);
+        super(id, sprite, damage, level, health, maxHealth, speed);
+        upgradeCost = 30;
     }
 
     @Override
     public void setUpgradeCost(int upgradeCost)
     {
-
+        this.upgradeCost = upgradeCost;
     }
 
     @Override
     public int getUpgradeCost()
     {
-        return 0;
+        return upgradeCost;
     }
 
     @Override
     public void onUpgrade()
     {
+        Level l = new Level(super.getLevel(), this);
+        l.incrementLevel();
+        l.onLevelChange();
+    }
 
+    public void levelUp()
+    {
+        super.setLevel(super.getLevel() + 1);
+        onUpgrade();
     }
 
     @Override
@@ -110,27 +122,34 @@ public class Player extends CharacterObject implements Upgradable
             angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
         }
 
-        if (Gdx.input.isKeyPressed(Keys.A))
-        {
-            changeInRotation = 5;
-        }
-        if (Gdx.input.isKeyPressed(Keys.D))
-        {
-            changeInRotation = -5;
-        }
+//        if (Gdx.input.isKeyPressed(Keys.A))
+//        {
+//            changeInRotation = 5;
+//        }
+//        if (Gdx.input.isKeyPressed(Keys.D))
+//        {
+//            changeInRotation = -5;
+//        }
 
         dx = angleX * super.getSpeed() * delta;
         dy = angleY * super.getSpeed() * delta;
 
         // Point towards mouse
-        /*
+
         float mouseX = Gdx.input.getX();
         float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        Vector2 dir = new Vector2(mouseX - super.getX(), mouseY - super.getY());
+        Vector2 dir = new Vector2(
+                mouseX - World.MAP_WIDTH * World.TILE_SIZE / 2,
+                mouseY - World.MAP_HEIGHT * World.TILE_SIZE / 2
+        );
+
         dir.rotate90(-1);
         super.setRotation(dir.angle());
-        */
+
+
+        if (Gdx.input.isKeyJustPressed(Keys.U)) levelUp();
+
     }
 
     public boolean place(PlaceableObject obj, int[][] grid)
