@@ -1,7 +1,6 @@
 package com.save_your_own_skin.game;
 
 import base_classes.GameObject;
-import base_classes.PlaceableObject;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -31,10 +30,18 @@ public class World extends ApplicationAdapter
     public static ScoreManager scoreManager;
     private int waveLevel;
 
+    private int[][] grid;
+    private int id;
+
     private SpriteBatch batch;
 
     private Player player;
+
     private GameObject currentSelectedObject;
+
+    // For a turret about to be placed
+    private boolean isTurretBeingPlaced;
+    private Turret turretBeingPlaced;
 
     // Textures
     private Texture playerTexture;
@@ -46,6 +53,9 @@ public class World extends ApplicationAdapter
     private Texture machineGunTexture;
     private Texture rocketLauncherTexture;
     private Texture slowDownTexture;
+    //Sidebar textures (health bar)
+    private Texture healthBar;
+    private Texture redBar;
 
     // Lists
     private List<GameObject> gameObjects; // All game objects
@@ -58,9 +68,6 @@ public class World extends ApplicationAdapter
     private float timeEndOfWave;
     private final float timeBetweenEnemyWaves = 60;
     private boolean allEnemiesSpawned;
-
-    private int[][] grid;
-    private int id;
 
     // Turrets
     private int currentTurretIndex; // Position in list of current turret
@@ -79,17 +86,13 @@ public class World extends ApplicationAdapter
     private BitmapFont bitmapFont;
     private ShapeRenderer sr;
 
-    private enum types
-    {
-        small, medium, large
-    }
-
     @Override
     public void create()
     {
         id = 0;
         batch = new SpriteBatch();
         grid = new int[MAP_WIDTH][MAP_HEIGHT];
+        isTurretBeingPlaced = false;
 
     /*________________________________________________________________________________________________________________*/
 
@@ -112,6 +115,8 @@ public class World extends ApplicationAdapter
         machineGunTexture = new Texture("turrets/machine_gun_t.png");
         rocketLauncherTexture = new Texture("turrets/rocket_launcher_t.png");
         slowDownTexture = new Texture("turrets/slow_down_t.png");
+        healthBar = new Texture("healthbar.png");
+        redBar = new Texture("red_healthbar.png ");
 
     /*________________________________________________________________________________________________________________*/
 
@@ -148,10 +153,10 @@ public class World extends ApplicationAdapter
         tiles = createMap();
         gameObjects.addAll(tiles);
 
-        // Player info stuff
+        // Side bar
         bitmapFont = new BitmapFont();
         scoreManager = new ScoreManager(0, 20);
-        waveLevel = 1;
+        waveLevel = 0;
 
         // For turret range
         sr = new ShapeRenderer();
@@ -163,6 +168,7 @@ public class World extends ApplicationAdapter
         // Hide cursor
         Gdx.input.setCursorCatched(true);
         Gdx.input.setCursorPosition(MAP_WIDTH * TILE_SIZE / 2, MAP_HEIGHT * TILE_SIZE / 2);
+
     }
 
     private List<Tile> createMap()
@@ -243,7 +249,6 @@ public class World extends ApplicationAdapter
                 timeEndOfWave = System.nanoTime();
                 allEnemiesSpawned = true;
                 waveLevel++;
-                System.out.println(waveLevel);
             }
 
             if (Math.abs(timeEndOfWave - System.nanoTime()) / 100000000 < timeBetweenEnemyWaves)
@@ -253,7 +258,6 @@ public class World extends ApplicationAdapter
 
             generateEnemies();
             allEnemiesSpawned = false;
-
         }
     }
 
@@ -285,53 +289,71 @@ public class World extends ApplicationAdapter
 
     private void placeTurret()
     {
-        // Only place if have enough money
-        if (scoreManager.getMoney() < defaultTurrets.get(currentTurretIndex).getCost())
-            return;
-
-        PlaceableObject toPlace = new Turret(++id, defaultTurrets.get(currentTurretIndex));
-
-        if (player.place(toPlace, grid) && scoreManager.buy(toPlace.getCost()))
-            gameObjects.add(toPlace);
-    }
-
-
-    // TODO find out if scroll up or down
-    private void changeCurrentTurretToPlace(int amount)
-    {
-        for (int i = 0; i < amount; i++)
+        if (player.place(turretBeingPlaced, grid) && scoreManager.buy(turretBeingPlaced.getCost()))
         {
-            currentTurretIndex++;
-
-            if (currentTurretIndex == 3) currentTurretIndex = 0;
-            else if (currentTurretIndex == -1) currentTurretIndex = 2;
+            turretBeingPlaced.setAlpha(1);
+            gameObjects.add(turretBeingPlaced);
         }
     }
 
+    private void changeCurrentTurretToPlace(int amount)
+    {
+        currentTurretIndex += amount;
 
-    private void onScrollWheel()
+        if (currentTurretIndex == 3) currentTurretIndex = 0;
+        else if (currentTurretIndex == -1) currentTurretIndex = 2;
+
+    }
+
+    private void handleInput()
     {
         Gdx.input.setInputProcessor(new InputAdapter()
         {
             @Override
             public boolean scrolled(int amount)
             {
-                System.out.println("hey");
-                changeCurrentTurretToPlace(1);
+                changeCurrentTurretToPlace(amount);
                 return true;
             }
+
+            @Override
+            public boolean keyUp(int keyCode)
+            {
+                if (keyCode == Input.Keys.B)
+                {
+                    placeTurret();
+                    isTurretBeingPlaced = false;
+                    turretBeingPlaced = null;
+                    return true;
+                }
+                return false;
+            }
         });
+
+        if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) Gdx.input.setCursorCatched(false);
+
+        // Create greyed out turret in front of player so that he can see where turret is being placedD
+        // Only place turret on key release
+        if (Gdx.input.isKeyPressed(Input.Keys.B))
+        {
+            isTurretBeingPlaced = true;
+            if (turretBeingPlaced == null)
+                turretBeingPlaced = new Turret(++id, defaultTurrets.get(currentTurretIndex));
+            turretBeingPlaced.setAlpha(0.5f);
+        }
     }
 
     /**
      * Finds the current turret the player is looking at and highlights it.
      * If there isn't one on that square highlight the square instead.
+     * Sets <code>currentSelectedObject</code> to the highlighted object
      */
-    private void findCurrentTurret()
+    private void highlightAimingTile()
     {
         // If pointing outside of world
         if (currentSelectedObject != null)
             currentSelectedObject.setAlpha(1f);
+
         currentSelectedObject = null;
 
         // Find direction to pointing in
@@ -359,6 +381,15 @@ public class World extends ApplicationAdapter
         int x = World.toGridPos(player.getX() + angleX);
         int y = World.toGridPos(player.getY() + angleY);
 
+        if (isTurretBeingPlaced)
+        {
+            currentSelectedObject = turretBeingPlaced;
+            turretBeingPlaced.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+            turretBeingPlaced.setAlpha(0.5f);
+            return;
+        }
+
+
         for (GameObject gameObject : gameObjects)
         {
             if (!(gameObject instanceof Turret || gameObject instanceof Tile))
@@ -382,9 +413,6 @@ public class World extends ApplicationAdapter
      */
     private void drawPlayer(float delta)
     {
-        findCurrentTurret();
-        if (Gdx.input.isKeyJustPressed(Input.Keys.B)) placeTurret();
-
         player.update(delta);
         // Player movement and collision
         GameObject collided = player.isColliding(
@@ -495,12 +523,14 @@ public class World extends ApplicationAdapter
         }
     }
 
+
     private void drawSideBar()
     {
-        // Sidebar
+        // Score and money
         bitmapFont.draw(batch, "Score: " + scoreManager.getScore(), 760, 700, 120, 1, true);
         bitmapFont.draw(batch, "Money: " + scoreManager.getMoney(), 760, 680, 120, 1, true);
 
+        // Turret picturedwa
         Turret currentTurret = defaultTurrets.get(currentTurretIndex);
         String title = "Turret that will be placed";
         if (currentSelectedObject instanceof Turret)
@@ -509,6 +539,7 @@ public class World extends ApplicationAdapter
             title = "Current selected turret";
         }
 
+        // Turret stats
         bitmapFont.draw(batch, title, 760, 620, 120, 1, true);
         batch.draw(currentTurret.getTexture(), 760, 450, 120, 120);
         String turretStats = "STATS" +
@@ -522,20 +553,26 @@ public class World extends ApplicationAdapter
             turretStats += "\nSlow down factor: " + 1 / currentTurret.getSlowDownFactor();
 
         bitmapFont.draw(batch, turretStats, 760, 430, 120, 1, true);
+
+        // Health bar
+        batch.draw(healthBar, 760, 200);
+        float remainingHealth = Math.max(0, 65 * player.getHealth() / player.getMaxHealth());
+        batch.draw(redBar, 822, 219, remainingHealth, 13);
+
+        // Level
+        bitmapFont.draw(batch, "Level: " + waveLevel, 760, 150, 120, 1, true);
     }
 
     @Override
     public void render()
     {
-        // TODO methoderize
-        if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) Gdx.input.setCursorCatched(false);
-
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         float delta = Gdx.graphics.getDeltaTime();
-        onScrollWheel();
 
+        handleInput();
+        highlightAimingTile();
         drawPlayer(delta);
         spawnEnemies();
     /*________________________________________________________________________________________________________________*/
@@ -580,6 +617,8 @@ public class World extends ApplicationAdapter
         // Done outside of main loop
         drawProjectile(delta);
         drawSideBar();
+        // Draw turret if holding b
+        if (isTurretBeingPlaced && turretBeingPlaced != null) turretBeingPlaced.draw(batch);
 
         batch.end();
 
