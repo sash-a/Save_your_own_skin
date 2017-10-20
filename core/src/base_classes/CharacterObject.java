@@ -122,4 +122,9 @@ public abstract class CharacterObject extends GameObject
     {
         this.level = level;
     }
+
+    public int getHealth()
+    {
+        return health;
+    }
 }

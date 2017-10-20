@@ -45,16 +45,11 @@ public class Enemy extends CharacterObject
      * Creates a sprite that is a copy in every way of the specified sprite.
      *
      * @param id
-     * @param sprite
-     * @param damage
-     * @param level
-     * @param health
-     * @param maxHealth
-     * @param speed
+     * @param enemy
      */
-    public Enemy(int id, Sprite sprite, float damage, int level, int health, int maxHealth, float speed)
+    public Enemy(int id, int level, Enemy enemy)
     {
-        super(id, sprite, damage, level, health, maxHealth, speed);
+        super(id, enemy, enemy.getDamage(), level, enemy.getHealth(), enemy.getMaxHealth(), enemy.getSpeed());
         upgradeToLevel();
     }
 
