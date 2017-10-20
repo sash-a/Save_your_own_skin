@@ -1,8 +1,5 @@
 package utils;
 
-/**
- * Created by reall on 2017/10/16.
- */
 public class ScoreManager
 {
     private int score;

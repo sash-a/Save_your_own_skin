@@ -4,6 +4,7 @@ import base_classes.CharacterObject;
 import base_classes.GameObject;
 import base_classes.PlaceableObject;
 import com.save_your_own_skin.game_objects.Player;
+import com.save_your_own_skin.game_objects.Turret;
 
 /**
  * Save_your_own_skin
@@ -13,7 +14,7 @@ import com.save_your_own_skin.game_objects.Player;
 public class Level
 {
     private final int levelNum;
-    private float damageMod, costMod, rangeMod, rateOfFireMod, healthMod, speedMod;
+    private float damageMod, slowDownMod, costMod, rangeMod, rateOfFireMod, healthMod, speedMod;
     private GameObject obj;
 
     public Level(int levelNum, GameObject obj)
@@ -26,19 +27,15 @@ public class Level
         rateOfFireMod = 1;
         healthMod = 1;
         speedMod = 1;
+        slowDownMod = 1;
     }
 
     public void incrementLevel()
     {
-        damageMod = 1;
-        costMod = 1;
-        rangeMod = 1;
-        rateOfFireMod = 1;
-        healthMod = 1;
-        speedMod = 1;
         if (levelNum % 2 == 0)
         {
             damageMod += 0.5;
+            slowDownMod -= 0.25;
             healthMod += 0.5;
         }
         else
@@ -49,6 +46,7 @@ public class Level
         if (levelNum % 4 == 0)
         {
             damageMod -= 0.5;
+            slowDownMod += 0.25;
             rateOfFireMod += 0.5;
         }
 
@@ -58,9 +56,17 @@ public class Level
     public void onLevelChange()
     {
         if (obj instanceof PlaceableObject)
-        {
             ((PlaceableObject) obj).setUpgradeCost((int) (((PlaceableObject) obj).getUpgradeCost() * costMod));
+
+        if (obj instanceof Turret)
+        {
+            Turret t = ((Turret) obj);
+            t.setDamage(t.getDamageRadius() * damageMod);
+            t.setDamageRadius(t.getDamageRadius() * rangeMod);
+            t.setRateOfFire(t.getRateOfFire() * rateOfFireMod);
+            if (t.isSlowDown()) t.setSlowDownFactor(t.getSlowDownFactor() * slowDownMod);
         }
+
         if (obj instanceof Player)
             ((Player) obj).setUpgradeCost((int) (((Player) obj).getUpgradeCost() * costMod));
 

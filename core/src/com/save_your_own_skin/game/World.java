@@ -126,7 +126,7 @@ public class World extends ApplicationAdapter
         // Create the default turrets and add to the list
         machineGunTurret = new Turret(-1, machineGunTexture, 25, 25, 15, 10, 1, 25, TILE_SIZE * 3, 0.5f, 650);
         rocketLauncherTurret = new Turret(-1, rocketLauncherTexture, 25, 25, 30, 20, 1, 60, TILE_SIZE * 4, 1, 400);
-        slowDownTurret = new Turret(-1, slowDownTexture, 25, 25, 20, 10, 1, 1.5f, TILE_SIZE * 3, 0.75f, 500);
+        slowDownTurret = new Turret(-1, slowDownTexture, 25, 25, 20, 10, 1, 2, TILE_SIZE * 3, 2, 500, true, 0.8f);
 
         defaultTurrets.add(machineGunTurret);
         defaultTurrets.add(rocketLauncherTurret);
@@ -323,7 +323,6 @@ public class World extends ApplicationAdapter
         });
     }
 
-
     /**
      * Finds the current turret the player is looking at and highlights it.
      * If there isn't one on that square highlight the square instead.
@@ -512,14 +511,17 @@ public class World extends ApplicationAdapter
 
         bitmapFont.draw(batch, title, 760, 620, 120, 1, true);
         batch.draw(currentTurret.getTexture(), 760, 450, 120, 120);
-        bitmapFont.draw(batch,
-                "STATS" +
-                        "\nCost: " + currentTurret.getCost() +
-                        "\nDamage: " + currentTurret.getDamage() +
-                        "\nRange: " + currentTurret.getDamageRadius() / TILE_SIZE +
-                        "\nRate of fire: " + 1 / currentTurret.getRateOfFire() +
-                        "\nUpgrade cost: " + currentTurret.getUpgradeCost(),
-                760, 430, 120, 1, true);
+        String turretStats = "STATS" +
+                "\nCost: " + currentTurret.getCost() +
+                "\nDamage: " + currentTurret.getDamage() +
+                "\nRange: " + currentTurret.getDamageRadius() / TILE_SIZE +
+                "\nRate of fire: " + 1 / currentTurret.getRateOfFire() +
+                "\nUpgrade cost: " + currentTurret.getUpgradeCost();
+
+        if (currentTurret.isSlowDown())
+            turretStats += "\nSlow down factor: " + 1 / currentTurret.getSlowDownFactor();
+
+        bitmapFont.draw(batch, turretStats, 760, 430, 120, 1, true);
     }
 
     @Override

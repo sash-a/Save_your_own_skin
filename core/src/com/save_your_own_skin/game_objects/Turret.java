@@ -19,10 +19,10 @@ import java.util.List;
 public class Turret extends PlaceableObject
 {
 
-    // TODO add slow down variables for that turret
     private float lastAttackTime;
     private float bulletSpeed;
-    private float damage, damageRadius, rateOfFire;
+    private float damage, damageRadius, rateOfFire, slowDownFactor;
+    private boolean isSlowDown;
 
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size.
@@ -35,7 +35,8 @@ public class Turret extends PlaceableObject
      * @param upgradeCost
      * @param level
      */
-    public Turret(int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level, float damage, float damageRadius, float rateOfFire, float bulletSpeed)
+    public Turret(int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level,
+                  float damage, float damageRadius, float rateOfFire, float bulletSpeed)
     {
         super(id, texture, srcWidth, srcHeight, cost, upgradeCost, level);
         this.lastAttackTime = System.nanoTime();
@@ -43,10 +44,13 @@ public class Turret extends PlaceableObject
         this.damageRadius = damageRadius;
         this.rateOfFire = rateOfFire;
         this.bulletSpeed = bulletSpeed;
+        this.isSlowDown = false;
+        this.slowDownFactor = 1;
     }
 
     /**
      * Creates a sprite that is a copy in every way of the specified sprite.
+     *
      * @param id
      * @param turret
      */
@@ -58,6 +62,22 @@ public class Turret extends PlaceableObject
         this.damageRadius = turret.damageRadius;
         this.rateOfFire = turret.rateOfFire;
         this.bulletSpeed = turret.bulletSpeed;
+        this.isSlowDown = turret.isSlowDown;
+        this.slowDownFactor = turret.slowDownFactor;
+    }
+
+    public Turret(
+            int id, Texture texture, int srcWidth, int srcHeight, int cost, int upgradeCost, int level, float damage,
+            float damageRadius, float rateOfFire, float bulletSpeed, boolean isSlowDown, float slowDownFactor)
+    {
+        super(id, texture, srcWidth, srcHeight, cost, upgradeCost, level);
+        this.lastAttackTime = System.nanoTime();
+        this.damage = damage;
+        this.damageRadius = damageRadius;
+        this.rateOfFire = rateOfFire;
+        this.bulletSpeed = bulletSpeed;
+        this.isSlowDown = isSlowDown;
+        this.slowDownFactor = slowDownFactor;
     }
 
     @Override
@@ -111,6 +131,36 @@ public class Turret extends PlaceableObject
     public float getRateOfFire()
     {
         return rateOfFire;
+    }
+
+    public void setDamage(float damage)
+    {
+        this.damage = damage;
+    }
+
+    public void setRateOfFire(float rateOfFire)
+    {
+        this.rateOfFire = rateOfFire;
+    }
+
+    public void setDamageRadius(float damageRadius)
+    {
+        this.damageRadius = damageRadius;
+    }
+
+    public float getSlowDownFactor()
+    {
+        return slowDownFactor;
+    }
+
+    public void setSlowDownFactor(float slowDownFactor)
+    {
+        this.slowDownFactor = slowDownFactor;
+    }
+
+    public boolean isSlowDown()
+    {
+        return isSlowDown;
     }
 
     public float getBulletSpeed()

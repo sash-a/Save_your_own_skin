@@ -53,6 +53,14 @@ public class Projectile extends GameObject implements Intractable
     {
         if (collidedObject instanceof Enemy)
         {
+            // Slowing down the enemy if it is a slow down turret
+            if (parent.isSlowDown())
+            {
+                Enemy e = ((Enemy) collidedObject);
+                float newSpeed = Math.max(50, e.getSpeed() * parent.getSlowDownFactor());
+                e.setSpeed(newSpeed);
+            }
+
             super.attack((int) parent.getDamage(), (Enemy) collidedObject);
             super.destroy();
             return;
