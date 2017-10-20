@@ -21,6 +21,7 @@ import java.util.*;
 public class World extends ApplicationAdapter
 {
     // TODO: implement global speed mod
+    // Constants
     public static final int WORLD_WIDTH = 900;
     public static final int WORLD_HEIGHT = 750;
     public static final int TILE_SIZE = 30;
@@ -28,6 +29,7 @@ public class World extends ApplicationAdapter
     public static final int MAP_WIDTH = 25;
 
     public static ScoreManager scoreManager;
+    private int waveLevel;
 
     private SpriteBatch batch;
 
@@ -71,6 +73,7 @@ public class World extends ApplicationAdapter
     private Enemy defaultSmallEnemy;
     private Enemy defaultMediumEnemy;
     private Enemy defaultLargeEnemy;
+    private List<Enemy> defaultEnemies;
 
     // Sidebar
     private BitmapFont bitmapFont;
@@ -96,6 +99,7 @@ public class World extends ApplicationAdapter
         enemies = new ArrayList<GameObject>();
         enemyWaves = new ArrayList<EnemyWave>();
         defaultTurrets = new ArrayList<Turret>();
+        defaultEnemies = new ArrayList<Enemy>();
 
 
     /*________________________________________________________________________________________________________________*/
@@ -135,15 +139,19 @@ public class World extends ApplicationAdapter
         defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 0, 0, 1, 75, 75, 130);
         defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 0, 0, 1, 100, 100, 90);
 
+        defaultEnemies.add(defaultLargeEnemy);
+        defaultEnemies.add(defaultMediumEnemy);
+        defaultEnemies.add(defaultSmallEnemy);
     /*________________________________________________________________________________________________________________*/
 
-                // Creating map
-                tiles = createMap();
+        // Creating map
+        tiles = createMap();
         gameObjects.addAll(tiles);
 
         // Player info stuff
         bitmapFont = new BitmapFont();
         scoreManager = new ScoreManager(0, 20);
+        waveLevel = 1;
 
         // For turret range
         sr = new ShapeRenderer();
@@ -189,31 +197,37 @@ public class World extends ApplicationAdapter
         return tiles;
     }
 
-    private List<Enemy> generateEnemies()
+    /**
+     * Randomly pick between the 3 different enemies.
+     * Amount of enemies and time between enemies depends on <code>waveLevel</code>
+     */
+    private void generateEnemies()
     {
-        return null;
-    }
+        List<Enemy> enemies = new ArrayList<Enemy>();
 
-    private void startWave(List<Enemy> enemies)
-    {
-        enemies = new ArrayList<Enemy>();
-        for (int i = 0; i < 10; i++)
+        int numEnemies = (int) Math.pow(waveLevel, 1.7);
+        for (int i = 0; i < numEnemies; i++)
         {
-            // TODO make enemy entrance bigger so that enemies fit
-            Enemy e = new Enemy(++id, smallEnemyTexture, 15, 15, 20, 1, 1, 1, 100, 100, 200);
-            float x = MAP_WIDTH / 2 * TILE_SIZE;
-            float y = MAP_HEIGHT * TILE_SIZE - 2 * TILE_SIZE;
-            e.setPosition(x, y);
+            int enemyType = (int) (Math.random() * 3);
+            Enemy enemy = new Enemy(id++, waveLevel, defaultEnemies.get(enemyType));
 
-            enemies.add(e);
+            float x = MAP_WIDTH / 2 * TILE_SIZE;
+            float y = MAP_HEIGHT * TILE_SIZE - 3 * TILE_SIZE;
+            enemy.setPosition(x, y);
+
+            enemies.add(enemy);
         }
-        enemyWaves.add(new EnemyWave(enemies, 5));
+
+        enemyWaves.add(new EnemyWave(enemies, (float) Math.max(0.75, 15 - waveLevel)));
     }
 
+    /**
+     * Incrementally spawns enemies.
+     * Initializes a new wave <code>timeBetweenEnemyWaves</code> seconds after last wave is finished.
+     */
     private void spawnEnemies()
     {
-        // Spawning waves
-        if (!enemyWaves.isEmpty() && !enemyWaves.get(0).isWaveFinished())
+        if (!enemyWaves.isEmpty() && !enemyWaves.get(0).isWaveFinished()) // Spawning waves
         {
             Enemy enemy = enemyWaves.get(0).spawnEnemy();
             if (enemy != null)
@@ -221,14 +235,15 @@ public class World extends ApplicationAdapter
                 gameObjects.add(enemy);
                 enemies.add(enemy);
             }
-
         }
-        else
+        else // If all enemies spawned
         {
             if (!allEnemiesSpawned)
             {
                 timeEndOfWave = System.nanoTime();
                 allEnemiesSpawned = true;
+                waveLevel++;
+                System.out.println(waveLevel);
             }
 
             if (Math.abs(timeEndOfWave - System.nanoTime()) / 100000000 < timeBetweenEnemyWaves)
@@ -236,7 +251,7 @@ public class World extends ApplicationAdapter
 
             if (!enemyWaves.isEmpty()) enemyWaves.remove(0);
 
-            startWave(new ArrayList<Enemy>());
+            generateEnemies();
             allEnemiesSpawned = false;
 
         }
@@ -276,7 +291,8 @@ public class World extends ApplicationAdapter
 
         PlaceableObject toPlace = new Turret(++id, defaultTurrets.get(currentTurretIndex));
 
-        if (player.place(toPlace, grid)) gameObjects.add(toPlace);
+        if (player.place(toPlace, grid) && scoreManager.buy(toPlace.getCost()))
+            gameObjects.add(toPlace);
     }
 
 

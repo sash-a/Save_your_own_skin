@@ -31,4 +31,12 @@ public class ScoreManager
         money += BASE_KILL_INCREASE * rewardMod;
         score += BASE_SCORE_INCREASE * scoreMod;
     }
+
+    public boolean buy (int price)
+    {
+        if (money < price) return false;
+
+        money -= price;
+        return true;
+    }
 }

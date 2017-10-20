@@ -111,6 +111,7 @@ public class Player extends CharacterObject implements Upgradable
         float angleY = 0;
         changeInRotation = 0;
 
+        // Movement
         if (Gdx.input.isKeyPressed(Keys.W))
         {
             angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
@@ -122,33 +123,35 @@ public class Player extends CharacterObject implements Upgradable
             angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
         }
 
-//        if (Gdx.input.isKeyPressed(Keys.A))
-//        {
-//            changeInRotation = 5;
-//        }
-//        if (Gdx.input.isKeyPressed(Keys.D))
-//        {
-//            changeInRotation = -5;
-//        }
+        // Rotation
+        if (Gdx.input.isKeyPressed(Keys.A))
+        {
+            changeInRotation = 10;
+        }
+        if (Gdx.input.isKeyPressed(Keys.D))
+        {
+            changeInRotation = -10;
+        }
 
         dx = angleX * super.getSpeed() * delta;
         dy = angleY * super.getSpeed() * delta;
 
         // Point towards mouse
+//
+//        float mouseX = Gdx.input.getX();
+//        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+//
+//        Vector2 dir = new Vector2(
+//                mouseX - World.MAP_WIDTH * World.TILE_SIZE / 2,
+//                mouseY - World.MAP_HEIGHT * World.TILE_SIZE / 2
+//        );
+//
+//        dir.rotate90(-1);
+//        super.setRotation(dir.angle());
 
-        float mouseX = Gdx.input.getX();
-        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        // Upgrading
+        if (Gdx.input.isKeyJustPressed(Keys.U) && World.scoreManager.buy(upgradeCost)) levelUp();
 
-        Vector2 dir = new Vector2(
-                mouseX - World.MAP_WIDTH * World.TILE_SIZE / 2,
-                mouseY - World.MAP_HEIGHT * World.TILE_SIZE / 2
-        );
-
-        dir.rotate90(-1);
-        super.setRotation(dir.angle());
-
-
-        if (Gdx.input.isKeyJustPressed(Keys.U)) levelUp();
 
     }
 
