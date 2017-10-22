@@ -16,7 +16,6 @@ import java.util.*;
 
 public class World extends Game
 {
-    // TODO: implement global speed mod
     // Constants
     public static final int WORLD_WIDTH = 900;
     public static final int WORLD_HEIGHT = 750;
@@ -64,20 +63,12 @@ public class World extends Game
 
     // Waves
     private float timeEndOfWave;
-    private final float timeBetweenEnemyWaves = 60;
     private boolean allEnemiesSpawned;
 
     // Turrets
     private int currentTurretIndex; // Position in list of current turret
     private List<Turret> defaultTurrets;
-    private Turret machineGunTurret;
-    private Turret rocketLauncherTurret;
-    private Turret slowDownTurret;
 
-    // Enemies
-    private Enemy defaultSmallEnemy;
-    private Enemy defaultMediumEnemy;
-    private Enemy defaultLargeEnemy;
     private List<Enemy> defaultEnemies;
 
     // Sidebar
@@ -127,9 +118,9 @@ public class World extends Game
     /*________________________________________________________________________________________________________________*/
 
         // Create the default turrets and add to the list
-        machineGunTurret = new Turret(-1, machineGunTexture, 25, 25, 15, 10, 1, 25, TILE_SIZE * 3, 0.5f, 650);
-        rocketLauncherTurret = new Turret(-1, rocketLauncherTexture, 25, 25, 30, 20, 1, 60, TILE_SIZE * 4, 1, 400);
-        slowDownTurret = new Turret(-1, slowDownTexture, 25, 25, 20, 10, 1, 2, TILE_SIZE * 3, 2, 500, true, 0.8f);
+        Turret machineGunTurret = new Turret(-1, machineGunTexture, 25, 25, 15, 10, 1, 25, TILE_SIZE * 3, 0.5f, 650);
+        Turret rocketLauncherTurret = new Turret(-1, rocketLauncherTexture, 25, 25, 30, 20, 1, 60, TILE_SIZE * 4, 1, 400);
+        Turret slowDownTurret = new Turret(-1, slowDownTexture, 25, 25, 20, 10, 1, 2, TILE_SIZE * 3, 2, 500, true, 0.8f);
 
         defaultTurrets.add(machineGunTurret);
         defaultTurrets.add(rocketLauncherTurret);
@@ -138,9 +129,9 @@ public class World extends Game
     /*________________________________________________________________________________________________________________*/
 
         // Create default enemies and add to list
-        defaultSmallEnemy = new Enemy(++id, smallEnemyTexture, 16, 25, 5, 1, 40, 40, 200);
-        defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 130);
-        defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 1, 100, 100, 90);
+        Enemy defaultSmallEnemy = new Enemy(++id, smallEnemyTexture, 16, 25, 5, 1, 40, 40, 200);
+        Enemy defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 130);
+        Enemy defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 1, 100, 100, 90);
 
         defaultEnemies.add(defaultLargeEnemy);
         defaultEnemies.add(defaultMediumEnemy);
@@ -179,8 +170,8 @@ public class World extends Game
         {
             for (int j = 0; j < MAP_HEIGHT; j++)
             {
-                if ((i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1)
-                        && !(i == MAP_WIDTH / 2 && j == MAP_HEIGHT - 1))
+                if ((i == 0 || j == 0 || i == MAP_HEIGHT - 1 || j == MAP_WIDTH - 1) // Draw border
+                        && !((i == MAP_WIDTH / 2 || i == MAP_WIDTH / 2 + 1 || i == MAP_WIDTH / 2 - 1) && j == MAP_HEIGHT - 1)) // Leave hole for enemies
                 {
                     Tile b = new Tile(++id, border, TILE_SIZE, TILE_SIZE, true);
                     b.setPosition(i * TILE_SIZE, j * TILE_SIZE);
@@ -216,7 +207,7 @@ public class World extends Game
             Enemy enemy = new Enemy(id++, waveLevel, defaultEnemies.get(enemyType));
 
             float x = MAP_WIDTH / 2 * TILE_SIZE;
-            float y = MAP_HEIGHT * TILE_SIZE - 3 * TILE_SIZE;
+            float y = MAP_HEIGHT * TILE_SIZE;
             enemy.setPosition(x, y);
 
             enemies.add(enemy);
@@ -249,6 +240,7 @@ public class World extends Game
                 waveLevel++;
             }
 
+            float timeBetweenEnemyWaves = 60;
             if (Math.abs(timeEndOfWave - System.nanoTime()) / NANO_TIME_CONVERTER < timeBetweenEnemyWaves)
                 return;
 
@@ -269,7 +261,9 @@ public class World extends Game
         return pos * TILE_SIZE;
     }
 
-
+    /**
+     * @return A list of game objects that the player can collide with
+     */
     private List<GameObject> filterPlayerCollisionList()
     {
         List<GameObject> playerCollidableObjects = new ArrayList<GameObject>();
@@ -285,9 +279,16 @@ public class World extends Game
         return playerCollidableObjects;
     }
 
+    /**
+     * Place a turret if player has enough money
+     */
     private void placeTurret()
     {
-        if (player.place(turretBeingPlaced, grid) && scoreManager.buy(turretBeingPlaced.getCost(), sr, System.nanoTime() / NANO_TIME_CONVERTER + 10, false))
+        if (player.place(turretBeingPlaced, grid) &&
+                scoreManager.buy(
+                        turretBeingPlaced.getCost(),
+                        sr, System.nanoTime() / NANO_TIME_CONVERTER + 10,
+                        false))
         {
             turretBeingPlaced.setAlpha(1);
             gameObjects.add(turretBeingPlaced);
@@ -303,6 +304,10 @@ public class World extends Game
 
     }
 
+    /**
+     * All input handling for player actions
+     * Player movement is done in player class
+     */
     private void handleInput()
     {
         Gdx.input.setInputProcessor(new InputAdapter()
@@ -442,23 +447,9 @@ public class World extends Game
         player.onCollision(collided, delta);
     }
 
-    // This is useful if go back to hashmap
-    /*private void moveEnemy(Enemy enemy, float delta)
-    {
-        enemy.pointToPlayer(player, delta);
-        for (Vector2 vector2 : gameObjectsOnScreen.keySet())
-        {
-            if (gameObjectsOnScreen.get(vector2) != null &&
-                    gameObjectsOnScreen.get(vector2).equals(enemy))
-            {
-                vector2.set(enemy.getDx(), enemy.getDy());
-                break;
-            }
-        }
-        enemy.move();
-    }
-    */
-
+    /**
+     * Draws enemy and checks for collisions
+     */
     private void drawEnemy(Enemy enemy, float delta, Iterator itr)
     {
         GameObject collided = enemy.isColliding(gameObjects,
@@ -484,6 +475,9 @@ public class World extends Game
         }
     }
 
+    /**
+     * Draw turret and make it fire at enemies in range
+     */
     private void drawTurret(Turret turret)
     {
         // Shoot
@@ -506,7 +500,11 @@ public class World extends Game
         }
     }
 
-    private void drawProjectile(float delta)
+    /**
+     * Draw all projectiles and handles their collision
+     *
+     */
+    private void drawProjectiles(float delta)
     {
         // Separate loop for projectiles
         Iterator itr = projectiles.iterator();
@@ -536,6 +534,9 @@ public class World extends Game
     }
 
 
+    /**
+     * Draw side bar
+     */
     private void drawSideBar()
     {
         // Score and money
@@ -588,9 +589,7 @@ public class World extends Game
         spawnEnemies();
     /*________________________________________________________________________________________________________________*/
 
-        // Render stuff
         batch.begin();
-
 
         // Draw tiles first
         for (Tile tile : tiles)
@@ -598,6 +597,9 @@ public class World extends Game
             tile.draw(batch);
         }
 
+    /*________________________________________________________________________________________________________________*/
+
+        // Main game loop
         Iterator itr = gameObjects.iterator();
         while (itr.hasNext())
         {
@@ -626,14 +628,12 @@ public class World extends Game
         }
 
         // Done outside of main loop
-        drawProjectile(delta);
+        drawProjectiles(delta);
         drawSideBar();
         // Draw turret if holding b
         if (isTurretBeingPlaced && turretBeingPlaced != null) turretBeingPlaced.draw(batch);
 
         batch.end();
-
-        // Debug
 
         sr.begin(ShapeRenderer.ShapeType.Line);
         sr.setColor(Color.NAVY);
@@ -644,6 +644,8 @@ public class World extends Game
                     ((Turret) currentSelectedObject).getRange().x,
                     ((Turret) currentSelectedObject).getRange().y,
                     ((Turret) currentSelectedObject).getRange().radius);
+
+        // Here because if not enough money need to draw shape to notify player
         handleInput();
         sr.end();
     }
@@ -653,5 +655,13 @@ public class World extends Game
     {
         batch.dispose();
         playerTexture.dispose();
+        smallEnemyTexture.dispose();
+        mediumEnemyTexture.dispose();
+        largeEnemyTexture.dispose();
+        slowDownTexture.dispose();
+        rocketLauncherTexture.dispose();
+        machineGunTexture.dispose();
+        redBar.dispose();
+        healthBar.dispose();
     }
 }
