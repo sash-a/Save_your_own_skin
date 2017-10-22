@@ -1,10 +1,7 @@
 package com.save_your_own_skin.game;
 
 import base_classes.GameObject;
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -17,7 +14,7 @@ import utils.*;
 
 import java.util.*;
 
-public class World extends ApplicationAdapter
+public class World extends Game
 {
     // TODO: implement global speed mod
     // Constants
@@ -26,6 +23,7 @@ public class World extends ApplicationAdapter
     public static final int TILE_SIZE = 30;
     public static final int MAP_HEIGHT = 25;
     public static final int MAP_WIDTH = 25;
+    public static final int NANO_TIME_CONVERTER = 100000000;
 
     public static ScoreManager scoreManager;
     private int waveLevel;
@@ -140,9 +138,9 @@ public class World extends ApplicationAdapter
     /*________________________________________________________________________________________________________________*/
 
         // Create default enemies and add to list
-        defaultSmallEnemy = new Enemy(++id, smallEnemyTexture, 16, 25, 5, 0, 0, 1, 40, 40, 200);
-        defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 0, 0, 1, 75, 75, 130);
-        defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 0, 0, 1, 100, 100, 90);
+        defaultSmallEnemy = new Enemy(++id, smallEnemyTexture, 16, 25, 5, 1, 40, 40, 200);
+        defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 130);
+        defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 1, 100, 100, 90);
 
         defaultEnemies.add(defaultLargeEnemy);
         defaultEnemies.add(defaultMediumEnemy);
@@ -251,7 +249,7 @@ public class World extends ApplicationAdapter
                 waveLevel++;
             }
 
-            if (Math.abs(timeEndOfWave - System.nanoTime()) / 100000000 < timeBetweenEnemyWaves)
+            if (Math.abs(timeEndOfWave - System.nanoTime()) / NANO_TIME_CONVERTER < timeBetweenEnemyWaves)
                 return;
 
             if (!enemyWaves.isEmpty()) enemyWaves.remove(0);
@@ -289,7 +287,7 @@ public class World extends ApplicationAdapter
 
     private void placeTurret()
     {
-        if (player.place(turretBeingPlaced, grid) && scoreManager.buy(turretBeingPlaced.getCost()))
+        if (player.place(turretBeingPlaced, grid) && scoreManager.buy(turretBeingPlaced.getCost(), sr, System.nanoTime() / NANO_TIME_CONVERTER + 10, false))
         {
             turretBeingPlaced.setAlpha(1);
             gameObjects.add(turretBeingPlaced);
@@ -319,7 +317,7 @@ public class World extends ApplicationAdapter
             @Override
             public boolean keyUp(int keyCode)
             {
-                if (keyCode == Input.Keys.B)
+                if (keyCode == Input.Keys.F)
                 {
                     placeTurret();
                     isTurretBeingPlaced = false;
@@ -334,12 +332,27 @@ public class World extends ApplicationAdapter
 
         // Create greyed out turret in front of player so that he can see where turret is being placedD
         // Only place turret on key release
-        if (Gdx.input.isKeyPressed(Input.Keys.B))
+        if (Gdx.input.isKeyPressed(Input.Keys.F))
         {
             isTurretBeingPlaced = true;
             if (turretBeingPlaced == null)
                 turretBeingPlaced = new Turret(++id, defaultTurrets.get(currentTurretIndex));
             turretBeingPlaced.setAlpha(0.5f);
+        }
+
+        // Upgrade a turret
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E) && currentSelectedObject instanceof Turret)
+        {
+            Turret currentTurret = (Turret) currentSelectedObject;
+            if (scoreManager.buy(currentTurret.getUpgradeCost(), sr, System.nanoTime() / NANO_TIME_CONVERTER + 5, true))
+                currentTurret.levelUp();
+        }
+
+        // Upgrade player
+        if (Gdx.input.isKeyJustPressed(Input.Keys.Q))
+        {
+            if (scoreManager.buy(player.getUpgradeCost(), sr, System.nanoTime() / NANO_TIME_CONVERTER + 5, true))
+                player.levelUp();
         }
     }
 
@@ -474,7 +487,6 @@ public class World extends ApplicationAdapter
     private void drawTurret(Turret turret)
     {
         // Shoot
-        // TODO make default projectiles global
         Projectile p = new Projectile(++id, mediumEnemyTexture, 10, 10, turret);
 
         for (GameObject enemy : enemies)
@@ -571,7 +583,6 @@ public class World extends ApplicationAdapter
 
         float delta = Gdx.graphics.getDeltaTime();
 
-        handleInput();
         highlightAimingTile();
         drawPlayer(delta);
         spawnEnemies();
@@ -633,7 +644,7 @@ public class World extends ApplicationAdapter
                     ((Turret) currentSelectedObject).getRange().x,
                     ((Turret) currentSelectedObject).getRange().y,
                     ((Turret) currentSelectedObject).getRange().radius);
-
+        handleInput();
         sr.end();
     }
 

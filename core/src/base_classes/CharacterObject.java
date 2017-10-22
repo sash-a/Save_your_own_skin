@@ -13,7 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 public abstract class CharacterObject extends GameObject
 {
     private float damage;
-    private int level; // TODO should be in game obj?
+    private int level;
     private int health, maxHealth;
     private float speed;
     protected float dx, dy, changeInRotation; // change in distance

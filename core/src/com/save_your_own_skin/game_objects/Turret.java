@@ -83,10 +83,6 @@ public class Turret extends PlaceableObject
     @Override
     public void onCollision(GameObject collidedObject, float delta)
     {
-        if (collidedObject instanceof PlaceableObject)
-        {
-            // TODO: do not allow placement here
-        }
     }
 
     @Override

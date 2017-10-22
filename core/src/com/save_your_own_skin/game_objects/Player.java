@@ -148,11 +148,6 @@ public class Player extends CharacterObject implements Upgradable
 //
 //        dir.rotate90(-1);
 //        super.setRotation(dir.angle());
-
-        // Upgrading
-        if (Gdx.input.isKeyJustPressed(Keys.U) && World.scoreManager.buy(upgradeCost)) levelUp();
-
-
     }
 
     public boolean place(PlaceableObject obj, int[][] grid)

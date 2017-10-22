@@ -20,8 +20,6 @@ public class Projectile extends GameObject implements Intractable
     private Turret parent;
 
     // TODO: rotation may need to be slightly ahead of the player
-
-
     /**
      * Creates a sprite with width, height, and texture region equal to the specified size.
      *

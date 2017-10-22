@@ -27,15 +27,12 @@ public class Enemy extends CharacterObject
      * @param srcWidth     The width of the texture region. May be negative to flip the sprite when drawn.
      * @param srcHeight    The height of the texture region. May be negative to flip the sprite when drawn.
      * @param damage
-     * @param damageRadius
-     * @param rateOfFire
      * @param level
      * @param health
      * @param maxHealth
      * @param speed
      */
-    //TODO damage rad and rof not needed damage on collision
-    public Enemy(int id, Texture texture, int srcWidth, int srcHeight, float damage, float damageRadius, float rateOfFire, int level, int health, int maxHealth, float speed)
+    public Enemy(int id, Texture texture, int srcWidth, int srcHeight, float damage, int level, int health, int maxHealth, float speed)
     {
         super(id, texture, srcWidth, srcHeight, damage, level, health, maxHealth, speed);
         upgradeToLevel();
@@ -113,7 +110,6 @@ public class Enemy extends CharacterObject
     public void destroy()
     {
         super.destroy();
-        // TODO implement modifiers
-        World.scoreManager.onKill(1,1);
+        World.scoreManager.onKill(super.getLevel()/2,super.getLevel());
     }
 }
