@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Vector2;
 import com.save_your_own_skin.game_objects.*;
 import utils.EnemyWave;
 import utils.*;
@@ -27,6 +28,7 @@ public class World extends Game
     public static ScoreManager scoreManager;
     private int waveLevel;
 
+    private Map<Vector2, Node> nodes;
     private int[][] grid;
     private int id;
 
@@ -81,6 +83,7 @@ public class World extends Game
         id = 0;
         batch = new SpriteBatch();
         grid = new int[MAP_WIDTH][MAP_HEIGHT];
+        nodes = new HashMap<Vector2, Node>();
         isTurretBeingPlaced = false;
 
     /*________________________________________________________________________________________________________________*/
@@ -128,9 +131,13 @@ public class World extends Game
 
     /*________________________________________________________________________________________________________________*/
 
+        // Creating map
+        tiles = createMap();
+        gameObjects.addAll(tiles);
+
         // Create default enemies and add to list
         Enemy defaultSmallEnemy = new Enemy(++id, smallEnemyTexture, 16, 25, 5, 1, 40, 40, 200);
-        Enemy defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 130);
+        Enemy defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 13);
         Enemy defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 1, 100, 100, 90);
 
         defaultEnemies.add(defaultLargeEnemy);
@@ -138,9 +145,6 @@ public class World extends Game
         defaultEnemies.add(defaultSmallEnemy);
     /*________________________________________________________________________________________________________________*/
 
-        // Creating map
-        tiles = createMap();
-        gameObjects.addAll(tiles);
 
         // Side bar
         bitmapFont = new BitmapFont();
@@ -185,6 +189,9 @@ public class World extends Game
                     Tile b = new Tile(++id, floor, TILE_SIZE, TILE_SIZE, false);
                     b.setPosition(i * TILE_SIZE, j * TILE_SIZE);
                     tiles.add(b);
+
+                    // No structure in the way --> add to hash map
+                    nodes.put(new Vector2(i, j), new Node(i, j, 1));
                 }
             }
         }
@@ -198,18 +205,17 @@ public class World extends Game
      */
     private void generateEnemies()
     {
+        Node playerNode = nodes.get(new Vector2(toGridPos(player.getX()), toGridPos(player.getY())));
         List<Enemy> enemies = new ArrayList<Enemy>();
 
         int numEnemies = (int) Math.pow(waveLevel, 1.7);
         for (int i = 0; i < numEnemies; i++)
         {
             int enemyType = (int) (Math.random() * 3);
-            Enemy enemy = new Enemy(id++, waveLevel, defaultEnemies.get(enemyType));
-
             float x = MAP_WIDTH / 2 * TILE_SIZE;
-            float y = MAP_HEIGHT * TILE_SIZE;
-            enemy.setPosition(x, y);
+            float y = MAP_HEIGHT * TILE_SIZE - 2 * TILE_SIZE;
 
+            Enemy enemy = new Enemy(id++, waveLevel, defaultEnemies.get(enemyType), playerNode, nodes, x, y);
             enemies.add(enemy);
         }
 
@@ -292,6 +298,11 @@ public class World extends Game
         {
             turretBeingPlaced.setAlpha(1);
             gameObjects.add(turretBeingPlaced);
+            // There is now an obstruction here so remove it from 'travelable' nodes
+            int x = toGridPos(turretBeingPlaced.getX());
+            int y = toGridPos(turretBeingPlaced.getY());
+            nodes.remove(new Vector2(x,y));
+            // TODO: recall a*
         }
     }
 
@@ -431,7 +442,15 @@ public class World extends Game
      */
     private void drawPlayer(float delta)
     {
-        player.update(delta);
+        // If player has moved
+        Node playerNode = nodes.get(new Vector2(toGridPos(player.getX()), toGridPos(player.getY())));
+        if (player.handleInput(delta))
+        {
+            for (GameObject enemy : enemies)
+            {
+                ((Enemy) enemy).aStar(playerNode, nodes);
+            }
+        }
         // Player movement and collision
         GameObject collided = player.isColliding(
                 filterPlayerCollisionList(),
@@ -460,7 +479,7 @@ public class World extends Game
 
         if (collided == null)
         {
-            enemy.pointToPlayer(player, delta);
+            enemy.gotoNextNode(delta);
             enemy.move();
             return;
         }
@@ -502,7 +521,6 @@ public class World extends Game
 
     /**
      * Draw all projectiles and handles their collision
-     *
      */
     private void drawProjectiles(float delta)
     {

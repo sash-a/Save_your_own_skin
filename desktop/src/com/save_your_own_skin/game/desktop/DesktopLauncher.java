@@ -10,7 +10,5 @@ public class DesktopLauncher {
 		config.height = World.WORLD_HEIGHT;
 		config.width = World.WORLD_WIDTH;
 		new LwjglApplication(new World(), config);
-
-
 	}
 }

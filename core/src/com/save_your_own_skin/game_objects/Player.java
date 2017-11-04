@@ -95,7 +95,7 @@ public class Player extends CharacterObject implements Upgradable
     @Override
     public void update(float delta)
     {
-        handleInput(delta);
+
     }
 
     /**
@@ -104,8 +104,9 @@ public class Player extends CharacterObject implements Upgradable
      *
      * @param delta
      */
-    public void handleInput(float delta)
+    public boolean handleInput(float delta)
     {
+        boolean moved = false;
         // So that if player isn't pressing keys obj this stop
         float angleX = 0;
         float angleY = 0;
@@ -116,11 +117,13 @@ public class Player extends CharacterObject implements Upgradable
         {
             angleY = (float) (Math.cos(Math.toRadians(super.getRotation())));
             angleX = -(float) (Math.sin(Math.toRadians(super.getRotation())));
+            moved = true;
         }
-        if (Gdx.input.isKeyPressed(Keys.S))
+        else if (Gdx.input.isKeyPressed(Keys.S))
         {
             angleY = -(float) (Math.cos(Math.toRadians(super.getRotation())));
             angleX = (float) (Math.sin(Math.toRadians(super.getRotation())));
+            moved = true;
         }
 
         // Rotation
@@ -136,6 +139,7 @@ public class Player extends CharacterObject implements Upgradable
         dx = angleX * super.getSpeed() * delta;
         dy = angleY * super.getSpeed() * delta;
 
+        return moved;
         // Point towards mouse
 //
 //        float mouseX = Gdx.input.getX();
