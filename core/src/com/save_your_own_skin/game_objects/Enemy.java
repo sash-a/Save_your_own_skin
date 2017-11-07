@@ -112,7 +112,7 @@ public class Enemy extends CharacterObject
         dy = angleY * super.getSpeed() * delta;
     }
 
-    public void  gotoNextNode(float delta)
+    public void gotoNextNode(Player player, float delta)
     {
         int range = World.TILE_SIZE;
         Node currentNode;
@@ -134,6 +134,7 @@ public class Enemy extends CharacterObject
         }
         catch (EmptyStackException e)
         {
+            pointToPlayer(player, delta);
             return;
         }
 
@@ -163,11 +164,18 @@ public class Enemy extends CharacterObject
      */
     public void aStar(Node goalNode, Map<Vector2, Node> nodePositions)
     {
+
         path = new Stack<Node>();
         Queue<Node> openList = new PriorityQueue<Node>(101);
         Queue<Node> closedList = new PriorityQueue<Node>(101);
 
         Node startNode = nodePositions.get(new Vector2(World.toGridPos(this.getX()), World.toGridPos(this.getY())));
+
+        // For collision help, had to remove 8 blocks surrounding turrets this is a check that the player or enemy is
+        // not on one of those blocks
+        // This does mean that enemies can still get stuck on the turrets if player is near them, but that is the fault
+        // of the collision not the pathing algorithm
+        if (startNode == null || goalNode == null) return;
 
         startNode.parent = null;
         startNode.cost = 0;
@@ -221,9 +229,9 @@ public class Enemy extends CharacterObject
     private List<Node> findNeighbours(Node n, Map<Vector2, Node> nodePositions)
     {
         List<Node> neighbours = new ArrayList<Node>();
-        for (int i = n.x - 1; i < n.x + 1; i++)
+        for (int i = n.x - 1; i <= n.x + 1; i++)
         {
-            for (int j = n.y - 1; j < n.y + 1; j++)
+            for (int j = n.y - 1; j <= n.y + 1; j++)
             {
                 Vector2 pos = new Vector2(i, j);
                 Node possibleNeighbour = nodePositions.get(pos);

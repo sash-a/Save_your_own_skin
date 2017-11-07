@@ -184,7 +184,7 @@ public class Player extends CharacterObject implements Upgradable
         // Can't place on borders and can't place if already turret there
         if (xPos > 23 || yPos > 23 || xPos < 0 || yPos < 0 || grid[xPos][yPos] != 0) return false;
 
-        obj.setPosition(World.toAbsolutePos(xPos) + World.TILE_SIZE / 4, World.toAbsolutePos(yPos) + World.TILE_SIZE / 4);
+        obj.setPosition(World.toAbsolutePos(xPos), World.toAbsolutePos(yPos));
 
         grid[xPos][yPos] = 2;
         return true;

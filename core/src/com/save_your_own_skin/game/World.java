@@ -121,7 +121,8 @@ public class World extends Game
     /*________________________________________________________________________________________________________________*/
 
         // Create the default turrets and add to the list
-        Turret machineGunTurret = new Turret(-1, machineGunTexture, 25, 25, 15, 10, 1, 25, TILE_SIZE * 3, 0.5f, 650);
+        // dmg at 0 for a* testing
+        Turret machineGunTurret = new Turret(-1, machineGunTexture, 20, 20, 15, 10, 1, 0, TILE_SIZE * 3, 0.5f, 650);
         Turret rocketLauncherTurret = new Turret(-1, rocketLauncherTexture, 25, 25, 30, 20, 1, 60, TILE_SIZE * 4, 1, 400);
         Turret slowDownTurret = new Turret(-1, slowDownTexture, 25, 25, 20, 10, 1, 2, TILE_SIZE * 3, 2, 500, true, 0.8f);
 
@@ -137,18 +138,18 @@ public class World extends Game
 
         // Create default enemies and add to list
         Enemy defaultSmallEnemy = new Enemy(++id, smallEnemyTexture, 16, 25, 5, 1, 40, 40, 200);
-        Enemy defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 13);
-        Enemy defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 1, 100, 100, 90);
+        Enemy defaultMediumEnemy = new Enemy(++id, mediumEnemyTexture, 21, 25, 15, 1, 75, 75, 90);
+        Enemy defaultLargeEnemy = new Enemy(++id, largeEnemyTexture, 23, 34, 25, 1, 100, 100, 13);
 
-        defaultEnemies.add(defaultLargeEnemy);
-        defaultEnemies.add(defaultMediumEnemy);
         defaultEnemies.add(defaultSmallEnemy);
+        defaultEnemies.add(defaultMediumEnemy);
+        defaultEnemies.add(defaultLargeEnemy);
     /*________________________________________________________________________________________________________________*/
 
 
         // Side bar
         bitmapFont = new BitmapFont();
-        scoreManager = new ScoreManager(0, 20);
+        scoreManager = new ScoreManager(0, 100000); // for a* testing
         waveLevel = 0;
 
         // For turret range
@@ -211,7 +212,8 @@ public class World extends Game
         int numEnemies = (int) Math.pow(waveLevel, 1.7);
         for (int i = 0; i < numEnemies; i++)
         {
-            int enemyType = (int) (Math.random() * 3);
+            //TODO back to 3
+            int enemyType = (int) (Math.random() * 2);
             float x = MAP_WIDTH / 2 * TILE_SIZE;
             float y = MAP_HEIGHT * TILE_SIZE - 2 * TILE_SIZE;
 
@@ -301,8 +303,21 @@ public class World extends Game
             // There is now an obstruction here so remove it from 'travelable' nodes
             int x = toGridPos(turretBeingPlaced.getX());
             int y = toGridPos(turretBeingPlaced.getY());
-            nodes.remove(new Vector2(x,y));
-            // TODO: recall a*
+
+            // removing node and all surrounding nodes from turret
+            for (int i = x - 1; i <= x + 1; i++)
+            {
+                for (int j = y - 1; j <= y + 1; j++)
+                {
+                    System.out.println(nodes.remove(new Vector2(i, j)));
+                }
+            }
+
+            Node playerNode = nodes.get(new Vector2(toGridPos(player.getX()), toGridPos(player.getY())));
+            for (GameObject enemy : enemies)
+            {
+                ((Enemy) enemy).aStar(playerNode, nodes);
+            }
         }
     }
 
@@ -479,7 +494,7 @@ public class World extends Game
 
         if (collided == null)
         {
-            enemy.gotoNextNode(delta);
+            enemy.gotoNextNode(player, delta);
             enemy.move();
             return;
         }
@@ -664,6 +679,11 @@ public class World extends Game
                     ((Turret) currentSelectedObject).getRange().radius);
 
         // Here because if not enough money need to draw shape to notify player
+        for (GameObject gameObject : gameObjects)
+        {
+            if (gameObject instanceof Turret)
+                sr.rect(gameObject.getBoundingRectangle().x, gameObject.getBoundingRectangle().y, gameObject.getBoundingRectangle().width, gameObject.getBoundingRectangle().height);
+        }
         handleInput();
         sr.end();
     }
